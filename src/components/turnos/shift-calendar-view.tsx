@@ -23,45 +23,45 @@ interface ShiftCalendarViewProps {
   onDateSelect: (date?: Date) => void;
 }
 
-// Mock data for May (adjust year as needed)
+// Mock data for May (adjust year as needed) - Surgeon names are now generic
 const currentYear = new Date().getFullYear();
 const dummyShiftData: ShiftAssignment[] = [
   // Week 1
-  { id: 'shift1', date: new Date(currentYear, 4, 1), shiftLabel: 'Turno jueves', surgeons: ['Arellano', 'Cáceres'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift2', date: new Date(currentYear, 4, 2), shiftLabel: 'Turno lunes', surgeons: ['Neira'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
-  { id: 'shift3', date: new Date(currentYear, 4, 3), shiftLabel: 'Volante 1', surgeons: ['Figueroa', 'Oroz'], bgColorClass: 'bg-green-100 text-green-800', borderColorClass: 'border-green-300' },
-  { id: 'shift4', date: new Date(currentYear, 4, 4), shiftLabel: 'Volante 2', surgeons: ['Jacubovsky', 'López'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
+  { id: 'shift1', date: new Date(currentYear, 4, 1), shiftLabel: 'Turno Jueves', surgeons: ['Cirujano Asignado 1', 'Cirujano Asignado 2'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
+  { id: 'shift2', date: new Date(currentYear, 4, 2), shiftLabel: 'Turno Lunes', surgeons: ['Cirujano Asignado 3'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
+  { id: 'shift3', date: new Date(currentYear, 4, 3), shiftLabel: 'Volante 1', surgeons: ['Cirujano Asignado 4', 'Cirujano Asignado 5'], bgColorClass: 'bg-green-100 text-green-800', borderColorClass: 'border-green-300' },
+  { id: 'shift4', date: new Date(currentYear, 4, 4), shiftLabel: 'Volante 2', surgeons: ['Cirujano Asignado 6'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
   // Week 2
-  { id: 'shift5', date: new Date(currentYear, 4, 5), shiftLabel: 'Turno lunes', surgeons: ['Neira', 'Neufeld'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
-  { id: 'shift6', date: new Date(currentYear, 4, 6), shiftLabel: 'Turno martes', surgeons: ['Astorga', 'Trepat'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift7', date: new Date(currentYear, 4, 7), shiftLabel: 'Turno miércoles', surgeons: [], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' }, 
-  { id: 'shift8', date: new Date(currentYear, 4, 8), shiftLabel: 'Turno jueves', surgeons: ['Arellano', 'Cáceres'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift9', date: new Date(currentYear, 4, 9), shiftLabel: 'Volante 1', surgeons: ['Figueroa', 'Oroz'], bgColorClass: 'bg-green-100 text-green-800', borderColorClass: 'border-green-300' },
-  { id: 'shift10', date: new Date(currentYear, 4, 10), shiftLabel: 'Volante 2', surgeons: ['Jacubovsky', 'Cáceres'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift11', date: new Date(currentYear, 4, 11), shiftLabel: 'Turno jueves', surgeons: ['Arellano', 'López'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' }, 
+  { id: 'shift5', date: new Date(currentYear, 4, 5), shiftLabel: 'Turno Lunes', surgeons: ['Cirujano Asignado 1', 'Cirujano Asignado 2'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
+  { id: 'shift6', date: new Date(currentYear, 4, 6), shiftLabel: 'Turno Martes', surgeons: ['Cirujano Asignado 3'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
+  { id: 'shift7', date: new Date(currentYear, 4, 7), shiftLabel: 'Turno Miércoles', surgeons: [], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' }, 
+  { id: 'shift8', date: new Date(currentYear, 4, 8), shiftLabel: 'Turno Jueves', surgeons: ['Cirujano Asignado 4', 'Cirujano Asignado 5'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
+  { id: 'shift9', date: new Date(currentYear, 4, 9), shiftLabel: 'Volante 1', surgeons: ['Cirujano Asignado 6'], bgColorClass: 'bg-green-100 text-green-800', borderColorClass: 'border-green-300' },
+  { id: 'shift10', date: new Date(currentYear, 4, 10), shiftLabel: 'Volante 2', surgeons: ['Cirujano Asignado 1', 'Cirujano Asignado 2'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
+  { id: 'shift11', date: new Date(currentYear, 4, 11), shiftLabel: 'Turno Jueves', surgeons: ['Cirujano Asignado 3'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' }, 
   // Week 3
-  { id: 'shift12', date: new Date(currentYear, 4, 12), shiftLabel: 'Turno lunes', surgeons: ['Neira', 'Neufeld'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
-  { id: 'shift13', date: new Date(currentYear, 4, 13), shiftLabel: 'Turno martes', surgeons: ['Astorga', 'Lopez'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift14', date: new Date(currentYear, 4, 14), shiftLabel: 'Turno miércoles', surgeons: ['Carreño'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
-  { id: 'shift15', date: new Date(currentYear, 4, 15), shiftLabel: 'Volante 1', surgeons: ['Figueroa', 'Oroz'], bgColorClass: 'bg-green-100 text-green-800', borderColorClass: 'border-green-300' },
-  { id: 'shift16', date: new Date(currentYear, 4, 16), shiftLabel: 'Volante 2', surgeons: ['Jacubovsky', 'López'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift17', date: new Date(currentYear, 4, 17), shiftLabel: 'Turno jueves', surgeons: ['Arellano', 'Cáceres'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift18', date: new Date(currentYear, 4, 18), shiftLabel: 'Turno miércoles', surgeons: ['Carreño'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
+  { id: 'shift12', date: new Date(currentYear, 4, 12), shiftLabel: 'Turno Lunes', surgeons: ['Cirujano Asignado 4', 'Cirujano Asignado 5'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
+  { id: 'shift13', date: new Date(currentYear, 4, 13), shiftLabel: 'Turno Martes', surgeons: ['Cirujano Asignado 6'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
+  { id: 'shift14', date: new Date(currentYear, 4, 14), shiftLabel: 'Turno Miércoles', surgeons: ['Cirujano Asignado 1'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
+  { id: 'shift15', date: new Date(currentYear, 4, 15), shiftLabel: 'Volante 1', surgeons: ['Cirujano Asignado 2', 'Cirujano Asignado 3'], bgColorClass: 'bg-green-100 text-green-800', borderColorClass: 'border-green-300' },
+  { id: 'shift16', date: new Date(currentYear, 4, 16), shiftLabel: 'Volante 2', surgeons: ['Cirujano Asignado 4'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
+  { id: 'shift17', date: new Date(currentYear, 4, 17), shiftLabel: 'Turno Jueves', surgeons: ['Cirujano Asignado 5', 'Cirujano Asignado 6'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
+  { id: 'shift18', date: new Date(currentYear, 4, 18), shiftLabel: 'Turno Miércoles', surgeons: ['Cirujano Asignado 1'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
   // Week 4
-  { id: 'shift19', date: new Date(currentYear, 4, 19), shiftLabel: 'Turno lunes', surgeons: ['Neira', 'Neufeld'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
-  { id: 'shift20', date: new Date(currentYear, 4, 20), shiftLabel: 'Turno martes', surgeons: ['Astorga', 'López'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift21', date: new Date(currentYear, 4, 21), shiftLabel: 'Volante 1', surgeons: ['Figueroa', 'Oroz'], bgColorClass: 'bg-green-100 text-green-800', borderColorClass: 'border-green-300' },
-  { id: 'shift22', date: new Date(currentYear, 4, 22), shiftLabel: 'Volante 2', surgeons: ['López'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift23', date: new Date(currentYear, 4, 23), shiftLabel: 'Turno jueves', surgeons: ['Carreño (desde 14:00)'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift24', date: new Date(currentYear, 4, 24), shiftLabel: 'Turno miércoles', surgeons: [], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' }, 
-  { id: 'shift25', date: new Date(currentYear, 4, 25), shiftLabel: 'Turno martes', surgeons: ['Astorga', 'Trepat'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
+  { id: 'shift19', date: new Date(currentYear, 4, 19), shiftLabel: 'Turno Lunes', surgeons: ['Cirujano Asignado 2', 'Cirujano Asignado 3'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
+  { id: 'shift20', date: new Date(currentYear, 4, 20), shiftLabel: 'Turno Martes', surgeons: ['Cirujano Asignado 4'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
+  { id: 'shift21', date: new Date(currentYear, 4, 21), shiftLabel: 'Volante 1', surgeons: ['Cirujano Asignado 5', 'Cirujano Asignado 6'], bgColorClass: 'bg-green-100 text-green-800', borderColorClass: 'border-green-300' },
+  { id: 'shift22', date: new Date(currentYear, 4, 22), shiftLabel: 'Volante 2', surgeons: ['Cirujano Asignado 1'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
+  { id: 'shift23', date: new Date(currentYear, 4, 23), shiftLabel: 'Turno Jueves', surgeons: ['Cirujano Asignado 2 (desde 14:00)'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
+  { id: 'shift24', date: new Date(currentYear, 4, 24), shiftLabel: 'Turno Miércoles', surgeons: [], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' }, 
+  { id: 'shift25', date: new Date(currentYear, 4, 25), shiftLabel: 'Turno Martes', surgeons: ['Cirujano Asignado 3', 'Cirujano Asignado 4'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
   // Week 5
-  { id: 'shift26', date: new Date(currentYear, 4, 26), shiftLabel: 'Turno lunes', surgeons: ['Neira', 'Neufeld'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
-  { id: 'shift27', date: new Date(currentYear, 4, 27), shiftLabel: 'Volante 1', surgeons: ['Figueroa', 'Oroz'], bgColorClass: 'bg-green-100 text-green-800', borderColorClass: 'border-green-300' },
-  { id: 'shift28', date: new Date(currentYear, 4, 28), shiftLabel: 'Volante 2', surgeons: ['López'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift29', date: new Date(currentYear, 4, 29), shiftLabel: 'Turno jueves', surgeons: ['Arellano', 'Cáceres'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift30', date: new Date(currentYear, 4, 30), shiftLabel: 'Turno miércoles', surgeons: ['Figueroa', 'Oroz'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
-  { id: 'shift31', date: new Date(currentYear, 4, 31), shiftLabel: 'Turno martes', surgeons: ['Astorga', 'Trepat'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
+  { id: 'shift26', date: new Date(currentYear, 4, 26), shiftLabel: 'Turno Lunes', surgeons: ['Cirujano Asignado 5', 'Cirujano Asignado 6'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
+  { id: 'shift27', date: new Date(currentYear, 4, 27), shiftLabel: 'Volante 1', surgeons: ['Cirujano Asignado 1', 'Cirujano Asignado 2'], bgColorClass: 'bg-green-100 text-green-800', borderColorClass: 'border-green-300' },
+  { id: 'shift28', date: new Date(currentYear, 4, 28), shiftLabel: 'Volante 2', surgeons: ['Cirujano Asignado 3'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
+  { id: 'shift29', date: new Date(currentYear, 4, 29), shiftLabel: 'Turno Jueves', surgeons: ['Cirujano Asignado 4', 'Cirujano Asignado 5'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
+  { id: 'shift30', date: new Date(currentYear, 4, 30), shiftLabel: 'Turno Miércoles', surgeons: ['Cirujano Asignado 6'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
+  { id: 'shift31', date: new Date(currentYear, 4, 31), shiftLabel: 'Turno Martes', surgeons: ['Cirujano Asignado 1', 'Cirujano Asignado 2'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
 ];
 
 
@@ -154,3 +154,4 @@ export default function ShiftCalendarView({ selectedDate, onDateSelect }: ShiftC
     </div>
   );
 }
+
