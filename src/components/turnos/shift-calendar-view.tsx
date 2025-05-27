@@ -1,13 +1,11 @@
-
 'use client';
 
 import React, { useState } from 'react';
 import { DayPicker, type DayContentProps } from 'react-day-picker';
 import 'react-day-picker/dist/style.css'; // Base styles for DayPicker
 import { es } from 'date-fns/locale';
-import { addMonths, subMonths, format, getYear, getMonth, getDate, isSameDay } from 'date-fns';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { addYears, subYears, format, getMonth, getDate, isSameDay } from 'date-fns'; // Removed addMonths, subMonths as DayPicker handles it
+import { ChevronLeft, ChevronRight } from 'lucide-react'; // Kept for potential future custom elements if needed, but not used by default DayPicker nav
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -104,68 +102,52 @@ function CustomDayContent(props: DayContentProps) {
 export default function ShiftCalendarView() {
   const initialDate = new Date(currentYear, 4, 1); // May of current year
   const [currentMonth, setCurrentMonth] = useState<Date>(initialDate);
-
-  const handlePrevMonth = () => {
-    setCurrentMonth(subMonths(currentMonth, 1));
-  };
-
-  const handleNextMonth = () => {
-    setCurrentMonth(addMonths(currentMonth, 1));
-  };
+  const fiveYearsAgo = subYears(new Date(), 5);
+  const fiveYearsFromNow = addYears(new Date(), 5);
 
   return (
     <div className="rounded-lg border bg-card text-card-foreground shadow-md p-4">
-      <div className="flex items-center justify-between mb-4">
-        <Button variant="outline" size="icon" onClick={handlePrevMonth} aria-label="Mes anterior">
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-        <h2 className="text-xl font-semibold text-center text-primary capitalize">
-          {format(currentMonth, 'MMMM yyyy', { locale: es })}
-        </h2>
-        <Button variant="outline" size="icon" onClick={handleNextMonth} aria-label="Mes siguiente">
-          <ChevronRight className="h-5 w-5" />
-        </Button>
-      </div>
+      {/* Custom navigation buttons and header removed, DayPicker's captionLayout handles this */}
       <DayPicker
         month={currentMonth}
-        onMonthChange={setCurrentMonth} // Allows DayPicker's internal nav if not using custom
+        onMonthChange={setCurrentMonth}
         locale={es}
         showOutsideDays
         fixedWeeks
+        captionLayout="dropdown-buttons" // Enables dropdowns for month/year and prev/next buttons
+        fromDate={fiveYearsAgo} // Sets the earliest year selectable in dropdown
+        toDate={fiveYearsFromNow}   // Sets the latest year selectable in dropdown
         components={{
           DayContent: CustomDayContent,
+          // IconLeft and IconRight can be customized if needed, but default icons will be used for dropdown-buttons layout
         }}
         
-        // Custom class names for DayPicker elements to match style
-        className="w-full" // Make DayPicker take full width of its container
+        className="w-full" 
         classNames={{
-          months: "space-y-0", // Remove default space if DayPicker renders multiple months
-          month: "space-y-0 border-collapse w-full", // Ensure month takes full width
-          table: "w-full border-collapse", // Table should take full width
+          months: "space-y-0", 
+          month: "space-y-0 border-collapse w-full", 
+          table: "w-full border-collapse", 
           head_row: "flex justify-between border-b",
-          head_cell: "w-[calc(100%/7)] py-2 text-sm font-medium text-muted-foreground text-center capitalize", // Ensure cells take equal width
-          row: "flex w-full border-b last:border-b-0", // Ensure rows take full width
-          cell: "w-[calc(100%/7)] border-r last:border-r-0 text-center relative", // Ensure cells take equal width and have borders
-          day: "", // Remove default button styling for the day itself, CustomDayContent handles it
-          day_selected: "", // No selection styling needed here
-          day_today: "font-bold", // Example: make today bold
+          head_cell: "w-[calc(100%/7)] py-2 text-sm font-medium text-muted-foreground text-center capitalize", 
+          row: "flex w-full border-b last:border-b-0", 
+          cell: "w-[calc(100%/7)] border-r last:border-r-0 text-center relative", 
+          day: "", 
+          day_selected: "", 
+          day_today: "font-bold", 
           day_outside: "text-muted-foreground/30",
-          caption_label: "hidden", // Hide default caption label as we have custom one
-          nav_button_previous: "hidden", // Hide default nav buttons
-          nav_button_next: "hidden", // Hide default nav buttons
+          // caption_label, nav_button_previous, nav_button_next are handled by captionLayout="dropdown-buttons"
+          // We don't need to hide them explicitly anymore if we want DayPicker's default controls.
+          // If specific styling for the new caption is needed, target .rdp-caption_label, .rdp-nav_button etc.
+          // For example, if built-in buttons are too small:
+          // nav_button: "h-8 w-8 p-0", // Example to make default nav buttons larger
         }}
       />
-      {/* Action buttons (e.g., Add Shift) can go here */}
     </div>
   );
 }
 
-// Add some CSS to globals.css or a local style tag if absolutely necessary
-// For example, to ensure day cells have a minimum height and proper borders:
-// .rdp-cell { min-height: 8rem; /* Or desired height */ }
-// .rdp-row { border-bottom: 1px solid hsl(var(--border)); }
-// .rdp-row:last-child { border-bottom: none; }
-// .rdp-cell { border-right: 1px solid hsl(var(--border)); }
-// .rdp-cell:last-child { border-right: none; }
-// These might be better handled by DayPicker's classNames prop and Tailwind above.
+// Ensure these styles are in globals.css or handled by Tailwind if DayPicker defaults aren't sufficient:
+// .rdp-caption_label { font-size: 1.25rem; font-weight: 600; }
+// .rdp-nav_button { border: 1px solid hsl(var(--border)); border-radius: var(--radius); }
+// .rdp-dropdown_month, .rdp-dropdown_year { padding: 0.25rem 0.5rem; border-radius: var(--radius); border: 1px solid hsl(var(--border)); }
 
