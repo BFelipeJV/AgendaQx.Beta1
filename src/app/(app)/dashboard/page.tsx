@@ -2,30 +2,37 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, CalendarDays, ListChecks, UserPlus } from 'lucide-react';
+import { ArrowRight, CalendarDays, ListChecks, UserPlus, CalendarClock } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
 
 const dashboardFeatures = [
   {
     title: 'Registro de Atenciones',
-    description: 'Añade un nuevo registro de atención.',
+    description: 'Añade un nuevo registro de atención seleccionando el tipo.',
     href: '/cirugias/registrar',
     icon: UserPlus,
     cta: 'Registrar Atención',
   },
   {
     title: 'Ver Agenda Quirúrgica',
-    description: 'Accede al calendario principal para ver y gestionar todas las cirugías futuras.',
+    description: 'Accede al calendario para ver y gestionar las cirugías programadas.',
     href: '/agenda',
     icon: CalendarDays,
     cta: 'Ver Agenda',
   },
   {
     title: 'Registro Quirúrgico de Hoy',
-    description: 'Consulta una lista detallada de todas las cirugías y procedimientos programados para hoy.',
+    description: 'Consulta la lista detallada de cirugías y procedimientos para hoy.',
     href: '/agenda/hoy',
     icon: ListChecks,
     cta: 'Ver Registro Diario',
+  },
+  {
+    title: 'Calendario de Turnos',
+    description: 'Visualiza y coordina los turnos de los cirujanos.',
+    href: '/turnos',
+    icon: CalendarClock,
+    cta: 'Ver Calendario de Turnos',
   },
 ];
 
@@ -41,13 +48,13 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {dashboardFeatures.map((feature) => (
           <Card key={feature.title} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-3">
                 <feature.icon className="h-8 w-8 text-primary" />
-                <CardTitle className="text-xl font-semibold">{feature.title}</CardTitle>
+                <CardTitle className="text-xl font-semibold tracking-tight">{feature.title}</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="flex-grow">

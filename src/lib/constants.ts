@@ -9,9 +9,9 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
     description: 'Resumen y acciones rápidas.',
   },
   {
-    title: 'Registro de Atenciones', // Title was already updated
-    href: '/cirugias/registrar',    // Path remains to the new selection page
-    iconName: 'ListPlus',         // Changed icon to be more generic for "atenciones"
+    title: 'Registro de Atenciones',
+    href: '/cirugias/registrar',
+    iconName: 'ListPlus',
     description: 'Seleccionar tipo de atención a registrar.',
   },
   {
@@ -26,12 +26,18 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
     iconName: 'ListChecks',
     description: 'Procedimientos programados para hoy.',
   },
+  {
+    title: 'Calendario de Turnos',
+    href: '/turnos',
+    iconName: 'CalendarClock', // O 'UsersRound'
+    description: 'Gestionar y visualizar los turnos de los cirujanos.',
+  },
 ];
 
 export const NAV_ITEMS_AUTH: NavItem[] = [
     {
     title: 'Cerrar Sesión',
-    href: '/login', // Idealmente llamaría a una acción de cierre de sesión
+    href: '/login', 
     iconName: 'LogOut',
     description: 'Salir de tu cuenta.',
   }
@@ -39,3 +45,4 @@ export const NAV_ITEMS_AUTH: NavItem[] = [
 
 export const APP_NAME = "AgendaQx";
 export const APP_HEADER_TITLE = "AGENDA QX";
+
