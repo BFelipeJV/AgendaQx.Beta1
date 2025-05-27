@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,6 +30,16 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+// Define a type for the stored user for clarity (should match UserRegistrationForm's StoredUser if defined there)
+interface StoredUser {
+  nombreCompleto: string;
+  email: string;
+  password: string; // In a real app, this would be a hashed password
+  rol: 'cirujano' | 'administrador';
+}
+
+const MOCK_USERS_STORAGE_KEY = 'mockRegisteredUsers';
+
 export default function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
@@ -44,15 +55,45 @@ export default function LoginForm() {
 
   async function onSubmit(values: LoginFormValues) {
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
     
-    if (values.email === "admin@example.com" && values.password === "password") {
+    let loggedIn = false;
+
+    // --- Simulation: Check localStorage for the user ---
+    // THIS IS NOT SECURE FOR PRODUCTION. For demonstration purposes only.
+    try {
+      const storedUsersJSON = localStorage.getItem(MOCK_USERS_STORAGE_KEY);
+      const storedUsers: StoredUser[] = storedUsersJSON ? JSON.parse(storedUsersJSON) : [];
+      
+      const foundUser = storedUsers.find(
+        user => user.email === values.email && user.password === values.password
+      );
+
+      if (foundUser) {
+        loggedIn = true;
+        toast({
+          title: 'Inicio de Sesión Exitoso',
+          description: `Bienvenido, ${foundUser.nombreCompleto}. Redirigiendo al panel principal...`,
+        });
+        router.push('/dashboard');
+      }
+    } catch (error) {
+      console.error("Error reading users from localStorage:", error);
+      // Proceed to fallback or error
+    }
+    // --- End Simulation ---
+
+    // Fallback to hardcoded admin if not logged in via localStorage
+    if (!loggedIn && values.email === "admin@example.com" && values.password === "password") {
+      loggedIn = true;
       toast({
-        title: 'Inicio de Sesión Exitoso',
+        title: 'Inicio de Sesión Exitoso (Admin)',
         description: 'Redirigiendo al panel principal...',
       });
       router.push('/dashboard');
-    } else {
+    }
+    
+    if (!loggedIn) {
       toast({
         title: 'Inicio de Sesión Fallido',
         description: 'Correo electrónico o contraseña inválidos.',
@@ -60,6 +101,7 @@ export default function LoginForm() {
       });
       setIsLoading(false);
     }
+    // If loggedIn is true, navigation already happened, so no need to setIsLoading(false) here for the success case.
   }
   
   return (

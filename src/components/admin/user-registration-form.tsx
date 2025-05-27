@@ -34,6 +34,11 @@ const userRegistrationSchema = z.object({
 
 type UserRegistrationFormValues = z.infer<typeof userRegistrationSchema>;
 
+// Define a type for the stored user for clarity
+interface StoredUser extends UserRegistrationFormValues {}
+
+const MOCK_USERS_STORAGE_KEY = 'mockRegisteredUsers';
+
 export default function UserRegistrationForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,20 +56,52 @@ export default function UserRegistrationForm() {
   async function onSubmit(values: UserRegistrationFormValues) {
     setIsSubmitting(true);
     console.log('Datos de Registro de Usuario:', values);
-    // Aquí iría la lógica para registrar el usuario (e.g., llamada a Firebase Auth)
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simular API
+
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // --- Simulation: Store user in localStorage ---
+    // THIS IS NOT SECURE FOR PRODUCTION. For demonstration purposes only.
+    try {
+      const existingUsersJSON = localStorage.getItem(MOCK_USERS_STORAGE_KEY);
+      const existingUsers: StoredUser[] = existingUsersJSON ? JSON.parse(existingUsersJSON) : [];
+      
+      // Check if email already exists
+      if (existingUsers.some(user => user.email === values.email)) {
+        toast({
+          title: 'Error de Registro',
+          description: 'Este correo electrónico ya está registrado.',
+          variant: 'destructive',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const newUser: StoredUser = { ...values };
+      existingUsers.push(newUser);
+      localStorage.setItem(MOCK_USERS_STORAGE_KEY, JSON.stringify(existingUsers));
+      
+      toast({
+        title: 'Usuario Registrado (Simulación Exitosa)',
+        description: `El usuario ${values.nombreCompleto} ha sido registrado con el rol de ${values.rol}. Ahora puede iniciar sesión.`,
+        action: (
+          <div className="flex items-center text-green-500">
+            <CheckCircle className="mr-2 h-5 w-5" />
+            <span>Éxito</span>
+          </div>
+        )
+      });
+      form.reset();
+    } catch (error) {
+      console.error("Error saving user to localStorage:", error);
+      toast({
+        title: 'Error de Almacenamiento',
+        description: 'No se pudo guardar el usuario localmente. Intente de nuevo.',
+        variant: 'destructive',
+      });
+    }
+    // --- End Simulation ---
     
-    toast({
-      title: 'Usuario Registrado (Simulación)',
-      description: `El usuario ${values.nombreCompleto} ha sido registrado con el rol de ${values.rol}.`,
-      action: (
-        <div className="flex items-center text-green-500">
-          <CheckCircle className="mr-2 h-5 w-5" />
-          <span>Éxito</span>
-        </div>
-      )
-    });
-    form.reset();
     setIsSubmitting(false);
   }
 
