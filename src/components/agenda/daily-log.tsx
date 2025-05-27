@@ -1,7 +1,8 @@
 
 'use client';
 
-import type { Surgery } from '@/lib/types';
+import type { Surgery, NonSurgicalPatient, ShiftNovelty } from '@/lib/types';
+import { MOCK_SURGERIES_STORAGE_KEY } from '@/lib/constants';
 import {
   Accordion,
   AccordionContent,
@@ -16,33 +17,24 @@ import { cn } from '@/lib/utils';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { differenceInHours, parseISO, isValid } from 'date-fns';
+import { differenceInHours, parseISO, isValid, isToday } from 'date-fns';
 
-// Dummy data for today's surgeries - adjust as needed for different sections
-const initialTodaysEntries: Surgery[] = [
-  { id: 's001', patientName: 'Eleonora Vance', patientId: 'P007', procedureType: 'Bypass Coronario', surgeon: 'Dr. Pérez', date: new Date().toISOString().split('T')[0], time: '08:00', operatingRoom: 'Q-1', status: 'Scheduled', entryTimestamp: new Date(new Date().setDate(new Date().getDate() -1)).toISOString() }, // Older than 24h
-  { id: 's002', patientName: 'Marcos Cole', patientId: 'P008', procedureType: 'Reparación de Hernia', surgeon: 'Dr. López', date: new Date().toISOString().split('T')[0], time: '10:30', operatingRoom: 'Q-2', status: 'Completed', entryTimestamp: new Date().toISOString() }, // Recent
-  { id: 's003', patientName: 'Lena Petrova', patientId: 'P009', procedureType: 'Cesárea', surgeon: 'Dr. García', date: new Date().toISOString().split('T')[0], time: '12:00', operatingRoom: 'Q-EMG', status: 'Scheduled', entryTimestamp: new Date().toISOString() },
-  { id: 's004', patientName: 'Raj Patel', patientId: 'P010', procedureType: 'Cirugía de Cataratas', surgeon: 'Dr. Lee', date: new Date().toISOString().split('T')[0], time: '14:00', operatingRoom: 'Q-3', status: 'Completed', entryTimestamp: new Date(new Date().setDate(new Date().getDate() -2)).toISOString() }, // Older than 24h
-  { id: 's005', patientName: 'Sofía Reyes', patientId: 'P011', procedureType: 'Amigdalectomía', surgeon: 'Dr. Pérez', date: new Date().toISOString().split('T')[0], time: '16:00', operatingRoom: 'Q-1', status: 'Scheduled', entryTimestamp: new Date().toISOString() },
+// Dummy data for other sections (will be replaced if localStorage has data for them)
+const initialNonSurgicalPatientsData: NonSurgicalPatient[] = [
+  { id: 'ns001', name: 'Ana Torres', diagnosis: 'Neumonía', attending: 'Dra. Vega', entryTimestamp: new Date(new Date().setHours(new Date().getHours() - 2)).toISOString() },
+  { id: 'ns002', name: 'Luis Rivas', diagnosis: 'Gastroenteritis', attending: 'Dr. Campos', entryTimestamp: new Date(new Date().setHours(new Date().getHours() - 26)).toISOString() },
 ];
 
-// Placeholder data for other sections
-const nonSurgicalPatientsData = [
-  { id: 'ns001', name: 'Ana Torres', diagnosis: 'Neumonía', attending: 'Dra. Vega', entryTimestamp: new Date().toISOString() },
-  { id: 'ns002', name: 'Luis Rivas', diagnosis: 'Gastroenteritis', attending: 'Dr. Campos', entryTimestamp: new Date(new Date().setHours(new Date().getHours() - 26)).toISOString() }, // > 24h ago
-];
-
-const shiftNoveltiesData = [
+const initialShiftNoveltiesData: ShiftNovelty[] = [
   { id: 'nv001', time: '09:15', text: 'Se retrasó cirugía de P007 por falta de material.', reportedBy: 'Enf. Carla Soto', entryTimestamp: new Date().toISOString() },
-  { id: 'nv002', time: '13:00', text: 'Paciente P009 presentó reacción alérgica leve post-operatoria.', reportedBy: 'Dr. García', entryTimestamp: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString() }, // Older
+  { id: 'nv002', time: '13:00', text: 'Paciente P009 presentó reacción alérgica leve post-operatoria.', reportedBy: 'Dr. García', entryTimestamp: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString() },
 ];
 
 
 interface PatientCardProps {
   surgery: Surgery;
   onDragStart: (e: React.DragEvent<HTMLDivElement>, surgeryId: string, currentStatus: Surgery['status']) => void;
-  onEdit: (surgeryId: string, entryTimestamp?: string) => void;
+  onEdit: (surgeryId: string, entryTimestamp: string) => void;
 }
 
 const PatientCard = ({ surgery, onDragStart, onEdit }: PatientCardProps) => {
@@ -90,9 +82,9 @@ const PatientCard = ({ surgery, onDragStart, onEdit }: PatientCardProps) => {
         </div>
       </CardHeader>
       <CardContent className="text-sm space-y-1">
-        <p><strong>Hora:</strong> {surgery.time}</p>
-        <p><strong>Cirujano:</strong> {surgery.surgeon}</p>
-        <p><strong>Quirófano:</strong> {surgery.operatingRoom}</p>
+        <p><strong>Hora:</strong> {surgery.time || 'N/A'}</p>
+        <p><strong>Cirujano:</strong> {surgery.surgeon || 'N/A'}</p>
+        <p><strong>Quirófano/Cama:</strong> {surgery.operatingRoom || surgery.ubicacionCama || 'N/A'}</p>
       </CardContent>
       <CardFooter className="flex justify-end gap-2 pt-3">
         <Button variant="outline" size="sm" onClick={() => onEdit(surgery.id, surgery.entryTimestamp)}>
@@ -104,8 +96,8 @@ const PatientCard = ({ surgery, onDragStart, onEdit }: PatientCardProps) => {
 };
 
 interface NonSurgicalPatientCardProps {
-    patient: typeof nonSurgicalPatientsData[0];
-    onEdit: (patientId: string, entryTimestamp?: string) => void;
+    patient: NonSurgicalPatient;
+    onEdit: (patientId: string, entryTimestamp: string) => void;
 }
 
 const NonSurgicalPatientCard = ({ patient, onEdit }: NonSurgicalPatientCardProps) => (
@@ -126,8 +118,8 @@ const NonSurgicalPatientCard = ({ patient, onEdit }: NonSurgicalPatientCardProps
 );
 
 interface NoveltyCardProps {
-    novelty: typeof shiftNoveltiesData[0];
-    onEdit: (noveltyId: string, entryTimestamp?: string) => void;
+    novelty: ShiftNovelty;
+    onEdit: (noveltyId: string, entryTimestamp: string) => void;
 }
 
 const NoveltyCard = ({ novelty, onEdit }: NoveltyCardProps) => (
@@ -150,25 +142,79 @@ const NoveltyCard = ({ novelty, onEdit }: NoveltyCardProps) => (
 
 export default function DailyLog() {
   const { toast } = useToast();
-  const [todaysEntries, setTodaysEntries] = useState<Surgery[]>(initialTodaysEntries);
-  const [nonSurgicalPatients, setNonSurgicalPatients] = useState(nonSurgicalPatientsData);
-  const [shiftNovelties, setShiftNovelties] = useState(shiftNoveltiesData);
+  const [todaysSurgeries, setTodaysSurgeries] = useState<Surgery[]>([]);
+  const [nonSurgicalPatients, setNonSurgicalPatients] = useState<NonSurgicalPatient[]>(initialNonSurgicalPatientsData);
+  const [shiftNovelties, setShiftNovelties] = useState<ShiftNovelty[]>(initialShiftNoveltiesData);
   const [draggingOver, setDraggingOver] = useState<Surgery['status'] | null>(null);
 
+  useEffect(() => {
+    // Load surgeries from localStorage
+    try {
+      const storedSurgeriesJSON = localStorage.getItem(MOCK_SURGERIES_STORAGE_KEY);
+      if (storedSurgeriesJSON) {
+        const allStoredSurgeries: Surgery[] = JSON.parse(storedSurgeriesJSON);
+        // Filter for today's surgeries
+        const todayFilteredSurgeries = allStoredSurgeries.filter(surgery => 
+            surgery.date && isToday(parseISO(surgery.date))
+        );
+        setTodaysSurgeries(todayFilteredSurgeries);
+      }
+    } catch (error) {
+      console.error("Error loading surgeries from localStorage:", error);
+      toast({
+        title: "Error de Carga",
+        description: "No se pudieron cargar las cirugías guardadas.",
+        variant: "destructive",
+      });
+    }
+    // Placeholder: Load non-surgical and novelties from their respective localStorage keys if implemented
+  }, [toast]);
+
+  const saveSurgeriesToLocalStorage = (updatedSurgeries: Surgery[]) => {
+    try {
+      // We need to merge updatedSurgeries with other surgeries in localStorage
+      // that are not for today to avoid losing them.
+      const storedSurgeriesJSON = localStorage.getItem(MOCK_SURGERIES_STORAGE_KEY);
+      let allSurgeries: Surgery[] = storedSurgeriesJSON ? JSON.parse(storedSurgeriesJSON) : [];
+      
+      // Get IDs of today's surgeries being updated
+      const updatedTodayIds = new Set(updatedSurgeries.map(s => s.id));
+      
+      // Filter out old versions of today's surgeries and add new versions
+      allSurgeries = allSurgeries.filter(s => !updatedTodayIds.has(s.id));
+      allSurgeries.push(...updatedSurgeries);
+      
+      // Filter for today again for local state, but save all to localStorage
+      const todayFiltered = allSurgeries.filter(s => s.date && isToday(parseISO(s.date)));
+      setTodaysSurgeries(todayFiltered);
+
+      localStorage.setItem(MOCK_SURGERIES_STORAGE_KEY, JSON.stringify(allSurgeries));
+
+    } catch (error) {
+      console.error("Error saving surgeries to localStorage:", error);
+      toast({
+        title: "Error de Guardado",
+        description: "No se pudieron guardar los cambios de las cirugías.",
+        variant: "destructive",
+      });
+    }
+  };
+
+
   const isEditable = (entryTimestamp?: string): boolean => {
-    if (!entryTimestamp) return true; // If no timestamp, assume editable (for now)
+    if (!entryTimestamp) return true; 
     const entryDate = parseISO(entryTimestamp);
-    if (!isValid(entryDate)) return true; // If invalid date, assume editable
+    if (!isValid(entryDate)) return true; 
     return differenceInHours(new Date(), entryDate) <= 24;
   };
 
-  const handleEdit = (itemId: string, itemType: string, entryTimestamp?: string) => {
+  const handleEdit = (itemId: string, itemType: string, entryTimestamp: string) => {
     const editable = isEditable(entryTimestamp);
-    let message = `Se intentó editar ${itemType} con ID: ${itemId}. `;
+    let message = `Se intentó editar ${itemType} (ID: ${itemId}). `;
     if (editable) {
-      message += "Este registro es editable (dentro de las 24h).";
+      message += "Este registro ES editable (dentro de las 24h).";
     } else {
-      message += "Este registro NO es editable (fuera de las 24h).";
+      message += "Este registro NO es editable (han pasado más de 24h).";
     }
     message += " La funcionalidad de edición completa está pendiente.";
 
@@ -177,7 +223,7 @@ export default function DailyLog() {
       description: message,
       variant: editable ? "default" : "destructive",
     });
-    console.log(message);
+    console.log(message, `Timestamp: ${entryTimestamp}`);
   };
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, surgeryId: string, currentStatus: Surgery['status']) => {
@@ -212,16 +258,16 @@ export default function DailyLog() {
       return;
     }
 
-    setTodaysEntries(prevEntries =>
-      prevEntries.map(surgery =>
-        surgery.id === draggedId ? { ...surgery, status: targetStatus, entryTimestamp: new Date().toISOString() } : surgery // Update timestamp on status change
-      )
+    const updatedSurgeries = todaysSurgeries.map(surgery =>
+      surgery.id === draggedId ? { ...surgery, status: targetStatus, entryTimestamp: new Date().toISOString() } : surgery
     );
+    saveSurgeriesToLocalStorage(updatedSurgeries); // Save to state and localStorage
     toast({ title: "Estado Actualizado", description: `La cirugía ${draggedId} se movió a ${targetStatus === 'Completed' ? 'Pacientes Operados' : 'Pendientes por Operar'}.`});
   };
 
-  const scheduledSurgeries = todaysEntries.filter(s => s.status === 'Scheduled');
-  const completedSurgeries = todaysEntries.filter(s => s.status === 'Completed');
+  const scheduledSurgeries = todaysSurgeries.filter(s => s.status === 'Scheduled');
+  const completedSurgeries = todaysSurgeries.filter(s => s.status === 'Completed');
+  // Add cancelledSurgeries if needed
 
   const accordionSections = [
     {
@@ -232,14 +278,14 @@ export default function DailyLog() {
       renderItem: (item: Surgery) => <PatientCard key={item.id} surgery={item} onDragStart={handleDragStart} onEdit={(id, ts) => handleEdit(id, "la cirugía", ts)} />,
       emptyText: "No hay pacientes registrados como operados hoy.",
       droppableStatus: 'Completed' as Surgery['status'],
-      navigationPath: '/cirugias/registrar/procedimiento'
+      navigationPath: '/cirugias/registrar/procedimiento' // Path to register a new procedure that would be 'completed'
     },
     {
       id: 'no-quirurgicos',
       title: 'Pacientes No Quirúrgicos',
       icon: UserCog,
       data: nonSurgicalPatients,
-      renderItem: (item: typeof nonSurgicalPatients[0]) => <NonSurgicalPatientCard key={item.id} patient={item} onEdit={(id, ts) => handleEdit(id, "el paciente no quirúrgico", ts)} />,
+      renderItem: (item: NonSurgicalPatient) => <NonSurgicalPatientCard key={item.id} patient={item} onEdit={(id, ts) => handleEdit(id, "el paciente no quirúrgico", ts)} />,
       emptyText: "No hay pacientes no quirúrgicos registrados hoy.",
       droppableStatus: null,
       navigationPath: '/cirugias/registrar/no-quirurgico'
@@ -252,22 +298,22 @@ export default function DailyLog() {
       renderItem: (item: Surgery) => <PatientCard key={item.id} surgery={item} onDragStart={handleDragStart} onEdit={(id, ts) => handleEdit(id, "la cirugía pendiente", ts)} />,
       emptyText: "No hay cirugías pendientes programadas para hoy.",
       droppableStatus: 'Scheduled' as Surgery['status'],
-      navigationPath: '/cirugias/registrar/procedimiento'
+      navigationPath: '/cirugias/registrar/procedimiento' // Path to register a new procedure that would be 'scheduled' (if form supported it)
     },
     {
       id: 'novedades',
       title: 'Novedades',
       icon: FileText,
       data: shiftNovelties,
-      renderItem: (item: typeof shiftNovelties[0]) => <NoveltyCard key={item.id} novelty={item} onEdit={(id, ts) => handleEdit(id, "la novedad", ts)} />,
+      renderItem: (item: ShiftNovelty) => <NoveltyCard key={item.id} novelty={item} onEdit={(id, ts) => handleEdit(id, "la novedad", ts)} />,
       emptyText: "No hay novedades registradas para el turno de hoy.",
       droppableStatus: null,
       navigationPath: '/cirugias/registrar/novedades-turno'
     },
   ];
 
-  if (todaysEntries.length === 0 && nonSurgicalPatients.length === 0 && shiftNovelties.length === 0) {
-    return <p className="text-muted-foreground text-center py-8">No hay registros para hoy.</p>;
+  if (todaysSurgeries.length === 0 && nonSurgicalPatients.length === 0 && shiftNovelties.length === 0) {
+    return <p className="text-muted-foreground text-center py-8">No hay registros para hoy. Intente añadir algunos desde "Registro de Atenciones".</p>;
   }
 
   return (
@@ -284,7 +330,7 @@ export default function DailyLog() {
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-primary rounded-full ml-auto mr-2 group-data-[state=closed]:opacity-100 group-data-[state=open]:opacity-100" // Ensure button is always visible for click
+                    className="h-8 w-8 text-muted-foreground hover:text-primary rounded-full ml-auto mr-2 group-data-[state=closed]:opacity-100 group-data-[state=open]:opacity-100"
                     onClick={(e) => e.stopPropagation()} 
                     aria-label={`Añadir a ${section.title}`}
                 >
@@ -292,7 +338,6 @@ export default function DailyLog() {
                 </Button>
                 </Link>
             )}
-            {/* The default ChevronDown from AccordionTrigger will be used here */}
           </AccordionTrigger>
           <AccordionContent
             className={cn(
@@ -314,4 +359,3 @@ export default function DailyLog() {
     </Accordion>
   );
 }
-    

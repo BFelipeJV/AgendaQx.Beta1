@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -16,10 +15,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Textarea } from '@/components/ui/textarea'; // Import Textarea
+import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle, Hourglass } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import type { Surgery } from '@/lib/types';
+import { MOCK_SURGERIES_STORAGE_KEY } from '@/lib/constants';
 
 const surgeryRegistrationSchema = z.object({
   tipoIntervencion: z.enum(['cirugia', 'procedimiento'], {
@@ -30,10 +31,10 @@ const surgeryRegistrationSchema = z.object({
   rut: z.string().min(7, { message: 'El RUT debe tener al menos 7 caracteres.' }).regex(/^[0-9Kk.-]+$/, { message: 'RUT inválido.'}),
   ubicacionCama: z.string().min(1, { message: 'La ubicación/cama es obligatoria.' }),
   cirugiaProcedimientoRealizado: z.string().min(3, { message: 'El nombre de la cirugía o procedimiento es obligatorio.' }),
-  diagnostico: z.string().optional(),
+  diagnostico: z.string().optional(), // This is 'diagnosticoGeneral' in Surgery type
   diagnosticoPreoperatorio: z.string().min(1, { message: 'El diagnóstico pre-operatorio es obligatorio.' }),
   diagnosticoPostoperatorio: z.string().min(1, { message: 'El diagnóstico post-operatorio es obligatorio.' }),
-  tratamiento: z.string().optional(),
+  tratamiento: z.string().optional(), // This is 'tratamientoIndicado'
   comentariosAdicionales: z.string().optional(),
 });
 
@@ -62,21 +63,58 @@ export default function SurgeryRegistrationForm() {
 
   async function onSubmit(values: SurgeryRegistrationFormValues) {
     setIsSubmitting(true);
-    console.log('Datos de Registro Quirúrgico:', values);
-    // Simular llamada API
-    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    toast({
-      title: 'Registro Exitoso',
-      description: `El registro para ${values.nombrePaciente} ha sido guardado.`,
-      action: (
-        <div className="flex items-center text-green-500">
-          <CheckCircle className="mr-2 h-5 w-5" />
-          <span>Éxito</span>
-        </div>
-      )
-    });
-    form.reset();
+    const now = new Date();
+    const newSurgery: Surgery = {
+      id: now.getTime().toString(),
+      tipoIntervencion: values.tipoIntervencion,
+      patientName: values.nombrePaciente,
+      patientId: values.rut,
+      edad: values.edad,
+      ubicacionCama: values.ubicacionCama,
+      procedureType: values.cirugiaProcedimientoRealizado,
+      diagnosticoGeneral: values.diagnostico,
+      diagnosticoPreOperatorio: values.diagnosticoPreoperatorio,
+      diagnosticoPostOperatorio: values.diagnosticoPostoperatorio,
+      tratamientoIndicado: values.tratamiento,
+      comentariosAdicionales: values.comentariosAdicionales,
+      
+      date: now.toISOString().split('T')[0], // Today's date
+      time: now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+      status: 'Completed', // Assuming registration implies completion for Daily Log
+      entryTimestamp: now.toISOString(),
+      surgeon: 'Dr. Asignado (Form.)', // Placeholder
+      operatingRoom: values.ubicacionCama, // Or a more specific parsing
+    };
+
+    console.log('Datos de Registro Quirúrgico a Guardar:', newSurgery);
+
+    try {
+      const existingSurgeriesJSON = localStorage.getItem(MOCK_SURGERIES_STORAGE_KEY);
+      const existingSurgeries: Surgery[] = existingSurgeriesJSON ? JSON.parse(existingSurgeriesJSON) : [];
+      existingSurgeries.push(newSurgery);
+      localStorage.setItem(MOCK_SURGERIES_STORAGE_KEY, JSON.stringify(existingSurgeries));
+      
+      toast({
+        title: 'Registro Exitoso',
+        description: `El registro para ${values.nombrePaciente} ha sido guardado en localStorage.`,
+        action: (
+          <div className="flex items-center text-green-500">
+            <CheckCircle className="mr-2 h-5 w-5" />
+            <span>Éxito</span>
+          </div>
+        )
+      });
+      form.reset();
+    } catch (error) {
+      console.error("Error saving surgery to localStorage:", error);
+      toast({
+        title: 'Error de Almacenamiento',
+        description: 'No se pudo guardar la cirugía localmente. Intente de nuevo.',
+        variant: 'destructive',
+      });
+    }
+    
     setIsSubmitting(false);
   }
 
@@ -274,5 +312,3 @@ export default function SurgeryRegistrationForm() {
     </Form>
   );
 }
-
-    
