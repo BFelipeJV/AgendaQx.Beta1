@@ -1,0 +1,22 @@
+import LoginForm from '@/components/auth/login-form';
+import { LogoIcon } from '@/components/icons/logo';
+import { APP_NAME } from '@/lib/constants';
+
+export default function LoginPage() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+          <LogoIcon className="mx-auto h-16 w-16 text-primary" />
+          <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-foreground">
+            Welcome to {APP_NAME}
+          </h1>
+          <p className="mt-2 text-lg text-muted-foreground">
+            Sign in to manage surgical schedules.
+          </p>
+        </div>
+        <LoginForm />
+      </div>
+    </div>
+  );
+}
