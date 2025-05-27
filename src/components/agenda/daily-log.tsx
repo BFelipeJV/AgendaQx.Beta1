@@ -11,9 +11,11 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, CheckCircle, Clock, UserCog, FileText, Edit3, Trash2, XCircle } from 'lucide-react';
+import { PlusCircle, CheckCircle, Clock, UserCog, FileText, Edit3, ChevronDown, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import React, { useState, useEffect } from 'react'; // Added React for useState
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
 
 // Dummy data for today's surgeries - adjust as needed for different sections
 const initialTodaysEntries: Surgery[] = [
@@ -39,9 +41,10 @@ const shiftNoveltiesData = [
 interface PatientCardProps {
   surgery: Surgery;
   onDragStart: (e: React.DragEvent<HTMLDivElement>, surgeryId: string, currentStatus: Surgery['status']) => void;
+  onEdit: (surgeryId: string) => void;
 }
 
-const PatientCard = ({ surgery, onDragStart }: PatientCardProps) => {
+const PatientCard = ({ surgery, onDragStart, onEdit }: PatientCardProps) => {
   let statusIcon, statusText, statusColorClass;
   switch (surgery.status) {
     case 'Scheduled':
@@ -55,7 +58,7 @@ const PatientCard = ({ surgery, onDragStart }: PatientCardProps) => {
       statusColorClass = 'border-green-500';
       break;
     case 'Cancelled':
-      statusIcon = <XCircle className="mr-2 h-4 w-4 text-red-500" />; // Ensure XCircle is imported
+      statusIcon = <XCircle className="mr-2 h-4 w-4 text-red-500" />;
       statusText = 'Cancelada';
       statusColorClass = 'border-red-500';
       break;
@@ -66,7 +69,7 @@ const PatientCard = ({ surgery, onDragStart }: PatientCardProps) => {
   }
 
   return (
-    <Card 
+    <Card
       className={cn("mb-3 shadow-md hover:shadow-lg transition-shadow cursor-grab", statusColorClass)}
       draggable={true}
       onDragStart={(e) => onDragStart(e, surgery.id, surgery.status)}
@@ -77,7 +80,7 @@ const PatientCard = ({ surgery, onDragStart }: PatientCardProps) => {
             <CardTitle className="text-lg">{surgery.procedureType}</CardTitle>
             <CardDescription>Paciente: {surgery.patientName} (ID: {surgery.patientId})</CardDescription>
           </div>
-          <Badge variant={surgery.status === 'Cancelled' ? 'destructive' : 'outline'} className={cn("capitalize text-sm py-1 px-2", 
+          <Badge variant={surgery.status === 'Cancelled' ? 'destructive' : 'outline'} className={cn("capitalize text-sm py-1 px-2",
             {"text-blue-700 bg-blue-100 border-blue-300": surgery.status === 'Scheduled'},
             {"text-green-700 bg-green-100 border-green-300": surgery.status === 'Completed'},
           )}>
@@ -91,8 +94,9 @@ const PatientCard = ({ surgery, onDragStart }: PatientCardProps) => {
         <p><strong>Quirófano:</strong> {surgery.operatingRoom}</p>
       </CardContent>
       <CardFooter className="flex justify-end gap-2 pt-3">
-        <Button variant="outline" size="sm"><Edit3 className="mr-1 h-3 w-3" /> Editar</Button>
-        {surgery.status === 'Scheduled' && <Button variant="destructive" size="sm"><Trash2 className="mr-1 h-3 w-3" /> Cancelar</Button>}
+        <Button variant="outline" size="sm" onClick={() => onEdit(surgery.id)}>
+            <Edit3 className="mr-1 h-3 w-3" /> Editar
+        </Button>
       </CardFooter>
     </Card>
   );
@@ -130,10 +134,21 @@ const NoveltyCard = ({ novelty }: { novelty: typeof shiftNoveltiesData[0] }) => 
 
 
 export default function DailyLog() {
+  const { toast } = useToast();
   const [todaysEntries, setTodaysEntries] = useState<Surgery[]>(initialTodaysEntries);
   const [nonSurgicalPatients, setNonSurgicalPatients] = useState(nonSurgicalPatientsData);
   const [shiftNovelties, setShiftNovelties] = useState(shiftNoveltiesData);
   const [draggingOver, setDraggingOver] = useState<Surgery['status'] | null>(null);
+
+  const handleEditSurgery = (surgeryId: string) => {
+    console.log(`Edit button clicked for surgery ID: ${surgeryId}`);
+    toast({
+      title: "Editar Cirugía (Próximamente)",
+      description: `Se intentó editar la cirugía con ID: ${surgeryId}. Esta funcionalidad aún no está implementada.`,
+      variant: "default",
+    });
+    // Future: Open a modal or navigate to an edit page for surgeryId
+  };
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, surgeryId: string, currentStatus: Surgery['status']) => {
     e.dataTransfer.setData('application/json', JSON.stringify({ id: surgeryId, status: currentStatus }));
@@ -158,13 +173,11 @@ export default function DailyLog() {
 
     const { id: draggedId, status: originalStatus } = JSON.parse(draggedItemData) as { id: string, status: Surgery['status']};
 
-    // Restriction: Cannot move 'Completed' back to 'Scheduled'
     if (originalStatus === 'Completed' && targetStatus === 'Scheduled') {
-      console.warn("Cannot move a completed surgery back to scheduled.");
+      toast({ title: "Acción no permitida", description: "Una cirugía completada no puede volver a 'Pendientes por Operar' mediante arrastre.", variant: "destructive"});
       return;
     }
     
-    // Restriction: Cannot drop onto its own status
     if (originalStatus === targetStatus) {
       return;
     }
@@ -174,47 +187,52 @@ export default function DailyLog() {
         surgery.id === draggedId ? { ...surgery, status: targetStatus } : surgery
       )
     );
+    toast({ title: "Estado Actualizado", description: `La cirugía ${draggedId} se movió a ${targetStatus === 'Completed' ? 'Pacientes Operados' : 'Pendientes por Operar'}.`});
   };
 
   const scheduledSurgeries = todaysEntries.filter(s => s.status === 'Scheduled');
   const completedSurgeries = todaysEntries.filter(s => s.status === 'Completed');
 
   const accordionSections = [
-    { 
-      id: 'operados', 
-      title: 'Pacientes Operados', 
-      icon: CheckCircle, 
-      data: completedSurgeries, 
-      renderItem: (item: Surgery) => <PatientCard key={item.id} surgery={item} onDragStart={handleDragStart} /> ,
+    {
+      id: 'operados',
+      title: 'Pacientes Operados',
+      icon: CheckCircle,
+      data: completedSurgeries,
+      renderItem: (item: Surgery) => <PatientCard key={item.id} surgery={item} onDragStart={handleDragStart} onEdit={handleEditSurgery} />,
       emptyText: "No hay pacientes registrados como operados hoy.",
-      droppableStatus: 'Completed' as Surgery['status']
+      droppableStatus: 'Completed' as Surgery['status'],
+      navigationPath: '/cirugias/registrar/procedimiento'
     },
-    { 
-      id: 'no-quirurgicos', 
-      title: 'Pacientes No Quirúrgicos', 
-      icon: UserCog, 
-      data: nonSurgicalPatients, 
+    {
+      id: 'no-quirurgicos',
+      title: 'Pacientes No Quirúrgicos',
+      icon: UserCog,
+      data: nonSurgicalPatients,
       renderItem: (item: typeof nonSurgicalPatients[0]) => <NonSurgicalPatientCard key={item.id} patient={item} />,
       emptyText: "No hay pacientes no quirúrgicos registrados hoy.",
-      droppableStatus: null // Not droppable for surgeries
+      droppableStatus: null,
+      navigationPath: '/cirugias/registrar/no-quirurgico'
     },
-    { 
-      id: 'pendientes', 
-      title: 'Pendientes por Operar', 
-      icon: Clock, 
-      data: scheduledSurgeries, 
-      renderItem: (item: Surgery) => <PatientCard key={item.id} surgery={item} onDragStart={handleDragStart} />,
+    {
+      id: 'pendientes',
+      title: 'Pendientes por Operar',
+      icon: Clock,
+      data: scheduledSurgeries,
+      renderItem: (item: Surgery) => <PatientCard key={item.id} surgery={item} onDragStart={handleDragStart} onEdit={handleEditSurgery} />,
       emptyText: "No hay cirugías pendientes programadas para hoy.",
-      droppableStatus: 'Scheduled' as Surgery['status']
+      droppableStatus: 'Scheduled' as Surgery['status'],
+      navigationPath: '/cirugias/registrar/procedimiento'
     },
-    { 
-      id: 'novedades', 
-      title: 'Novedades', 
-      icon: FileText, 
-      data: shiftNovelties, 
+    {
+      id: 'novedades',
+      title: 'Novedades',
+      icon: FileText,
+      data: shiftNovelties,
       renderItem: (item: typeof shiftNovelties[0]) => <NoveltyCard key={item.id} novelty={item} />,
       emptyText: "No hay novedades registradas para el turno de hoy.",
-      droppableStatus: null // Not droppable for surgeries
+      droppableStatus: null,
+      navigationPath: '/cirugias/registrar/novedades-turno'
     },
   ];
 
@@ -226,16 +244,33 @@ export default function DailyLog() {
     <Accordion type="multiple" className="w-full space-y-4" defaultValue={['pendientes', 'operados']}>
       {accordionSections.map((section) => (
         <AccordionItem value={section.id} key={section.id} className="border rounded-lg shadow-md bg-card overflow-hidden">
-          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50 transition-colors">
-            <div className="flex items-center text-lg font-semibold text-primary">
-              <section.icon className="mr-3 h-6 w-6" />
-              {section.title}
+          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50 transition-colors group">
+            <div className="flex items-center justify-between w-full">
+                <div className="flex items-center text-lg font-semibold text-primary">
+                <section.icon className="mr-3 h-6 w-6" />
+                {section.title}
+                </div>
+                <div className="flex items-center gap-2">
+                {section.navigationPath && (
+                    <Link href={section.navigationPath} passHref legacyBehavior>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-primary rounded-full"
+                        onClick={(e) => e.stopPropagation()} // Prevent accordion from toggling
+                        aria-label={`Añadir a ${section.title}`}
+                    >
+                        <PlusCircle className="h-5 w-5" />
+                    </Button>
+                    </Link>
+                )}
+                <ChevronDown className="h-6 w-6 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                </div>
             </div>
-            <Plus className="h-6 w-6 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-45" />
           </AccordionTrigger>
-          <AccordionContent 
+          <AccordionContent
             className={cn(
-                "px-6 py-4 border-t bg-background min-h-[100px]", // Added min-h for drop zone visibility
+                "px-6 py-4 border-t bg-background min-h-[100px]",
                 draggingOver === section.droppableStatus && section.droppableStatus && "bg-primary/10 border-primary border-dashed border-2"
              )}
             onDragOver={(e) => section.droppableStatus && handleDragOver(e, section.droppableStatus)}
@@ -253,5 +288,6 @@ export default function DailyLog() {
     </Accordion>
   );
 }
+    
 
     
