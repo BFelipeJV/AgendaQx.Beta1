@@ -16,15 +16,15 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { useRouter } from 'next/navigation'; // Use next/navigation for App Router
+import { useRouter } from 'next/navigation'; 
 import { useToast } from '@/hooks/use-toast';
-import { useState, type FormEvent } from 'react'; // Import FormEvent
+import { useState, type FormEvent } from 'react'; 
 import { LogIn } from 'lucide-react';
 
 
 const loginSchema = z.object({
-  email: z.string().email({ message: 'Invalid email address.' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  email: z.string().email({ message: 'Dirección de correo electrónico inválida.' }),
+  password: z.string().min(6, { message: 'La contraseña debe tener al menos 6 caracteres.' }),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -42,45 +42,31 @@ export default function LoginForm() {
     },
   });
 
-  // Placeholder onSubmit function
   async function onSubmit(values: LoginFormValues) {
     setIsLoading(true);
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Simulate success/failure
     if (values.email === "admin@example.com" && values.password === "password") {
       toast({
-        title: 'Login Successful',
-        description: 'Redirecting to dashboard...',
+        title: 'Inicio de Sesión Exitoso',
+        description: 'Redirigiendo al panel principal...',
       });
       router.push('/dashboard');
     } else {
       toast({
-        title: 'Login Failed',
-        description: 'Invalid email or password.',
+        title: 'Inicio de Sesión Fallido',
+        description: 'Correo electrónico o contraseña inválidos.',
         variant: 'destructive',
       });
       setIsLoading(false);
     }
   }
   
-  // Server action (alternative to API route, but for simplicity using client-side handler for now)
-  // const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-  //   event.preventDefault();
-  //   setIsLoading(true);
-  //   const formData = new FormData(event.currentTarget);
-  //   // const result = await loginUser(formData); // Your server action
-  //   // Handle result...
-  //   setIsLoading(false);
-  // };
-
-
   return (
     <Card className="w-full shadow-xl">
       <CardHeader>
-        <CardTitle className="text-2xl">Sign In</CardTitle>
-        <CardDescription>Enter your credentials to access your account.</CardDescription>
+        <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
+        <CardDescription>Ingresa tus credenciales para acceder a tu cuenta.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-0">
@@ -90,9 +76,9 @@ export default function LoginForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Correo Electrónico</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="name@example.com" {...field} disabled={isLoading} />
+                    <Input type="email" placeholder="nombre@ejemplo.com" {...field} disabled={isLoading} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -103,7 +89,7 @@ export default function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>Contraseña</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} disabled={isLoading} />
                   </FormControl>
@@ -115,12 +101,12 @@ export default function LoginForm() {
           <CardFooter className="flex flex-col gap-4">
             <Button type="submit" className="w-full h-12 text-lg" disabled={isLoading}>
               <LogIn className="mr-2 h-5 w-5" />
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {isLoading ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
             </Button>
             <p className="text-sm text-center text-muted-foreground">
-              Don&apos;t have an account?{' '}
+              ¿No tienes una cuenta?{' '}
               <Link href="#" className="font-medium text-primary hover:underline">
-                Contact Support
+                Contactar Soporte
               </Link>
             </p>
           </CardFooter>

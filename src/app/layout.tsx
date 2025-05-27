@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'QX Scheduler',
-  description: 'Surgical Emergency Scheduling Application',
+  title: 'QX Scheduler', // Title could be 'Agendador QX' or similar
+  description: 'Aplicación de Agendamiento de Emergencias Quirúrgicas',
 };
 
 export default function RootLayout({
@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="es"> {/* Changed lang to "es" */}
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
         <Toaster />

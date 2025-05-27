@@ -9,10 +9,10 @@ export default function LoginPage() {
         <div className="text-center">
           <LogoIcon className="mx-auto h-16 w-16 text-primary" />
           <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-foreground">
-            Welcome to {APP_NAME}
+            Bienvenido a {APP_NAME}
           </h1>
           <p className="mt-2 text-lg text-muted-foreground">
-            Sign in to manage surgical schedules.
+            Inicia sesión para gestionar las agendas quirúrgicas.
           </p>
         </div>
         <LoginForm />

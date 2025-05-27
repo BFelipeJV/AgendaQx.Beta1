@@ -25,18 +25,19 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { es } from 'date-fns/locale'; // Import Spanish locale for date-fns
 import { CalendarIcon, CheckCircle, Hourglass } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
 const surgerySchema = z.object({
-  patientName: z.string().min(2, { message: 'Patient name must be at least 2 characters.' }),
-  patientId: z.string().min(1, { message: 'Patient ID is required.' }),
-  procedureType: z.string().min(3, { message: 'Procedure type is required.' }),
-  surgeon: z.string().min(3, { message: 'Surgeon name is required.' }),
-  date: z.date({ required_error: 'Surgery date is required.' }),
-  time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: 'Invalid time format (HH:MM).' }),
-  operatingRoom: z.string().min(1, { message: 'Operating room is required.' }),
+  patientName: z.string().min(2, { message: 'El nombre del paciente debe tener al menos 2 caracteres.' }),
+  patientId: z.string().min(1, { message: 'El ID del paciente es obligatorio.' }),
+  procedureType: z.string().min(3, { message: 'El tipo de procedimiento es obligatorio.' }),
+  surgeon: z.string().min(3, { message: 'El nombre del cirujano es obligatorio.' }),
+  date: z.date({ required_error: 'La fecha de la cirugía es obligatoria.' }),
+  time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: 'Formato de hora inválido (HH:MM).' }),
+  operatingRoom: z.string().min(1, { message: 'El quirófano es obligatorio.' }),
 });
 
 type SurgeryFormValues = z.infer<typeof surgerySchema>;
@@ -52,24 +53,24 @@ export default function SurgeryRegistrationForm() {
       patientId: '',
       procedureType: '',
       surgeon: '',
-      time: '09:00', // Default time
+      time: '09:00', // Hora predeterminada
       operatingRoom: '',
     },
   });
 
   async function onSubmit(values: SurgeryFormValues) {
     setIsSubmitting(true);
-    console.log('Surgery Registration Data:', values);
-    // Simulate API call
+    console.log('Datos de Registro de Cirugía:', values);
+    // Simular llamada API
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     toast({
-      title: 'Surgery Registered',
-      description: `Surgery for ${values.patientName} has been successfully scheduled.`,
+      title: 'Cirugía Registrada',
+      description: `La cirugía para ${values.patientName} ha sido programada exitosamente.`,
       action: (
         <div className="flex items-center text-green-500">
           <CheckCircle className="mr-2 h-5 w-5" />
-          <span>Success</span>
+          <span>Éxito</span>
         </div>
       )
     });
@@ -86,9 +87,9 @@ export default function SurgeryRegistrationForm() {
             name="patientName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Patient Name</FormLabel>
+                <FormLabel>Nombre del Paciente</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., John Doe" {...field} disabled={isSubmitting}/>
+                  <Input placeholder="Ej: Juan Pérez" {...field} disabled={isSubmitting}/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -99,9 +100,9 @@ export default function SurgeryRegistrationForm() {
             name="patientId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Patient ID</FormLabel>
+                <FormLabel>ID del Paciente</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., P123456789" {...field} disabled={isSubmitting}/>
+                  <Input placeholder="Ej: P123456789" {...field} disabled={isSubmitting}/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -114,11 +115,11 @@ export default function SurgeryRegistrationForm() {
           name="procedureType"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Procedure Type</FormLabel>
+              <FormLabel>Tipo de Procedimiento</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Appendectomy" {...field} disabled={isSubmitting}/>
+                <Input placeholder="Ej: Apendicectomía" {...field} disabled={isSubmitting}/>
               </FormControl>
-              <FormDescription>Specify the type of surgical procedure.</FormDescription>
+              <FormDescription>Especifique el tipo de procedimiento quirúrgico.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -129,17 +130,17 @@ export default function SurgeryRegistrationForm() {
           name="surgeon"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Surgeon</FormLabel>
+              <FormLabel>Cirujano</FormLabel>
                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select surgeon" />
+                    <SelectValue placeholder="Seleccionar cirujano" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="Dr. Smith">Dr. Smith</SelectItem>
                   <SelectItem value="Dr. Jones">Dr. Jones</SelectItem>
-                  <SelectItem value="Dr. Garcia">Dr. Garcia</SelectItem>
+                  <SelectItem value="Dr. Garcia">Dr. García</SelectItem>
                   <SelectItem value="Dr. Lee">Dr. Lee</SelectItem>
                 </SelectContent>
               </Select>
@@ -154,7 +155,7 @@ export default function SurgeryRegistrationForm() {
             name="date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Surgery Date</FormLabel>
+                <FormLabel>Fecha de Cirugía</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -167,7 +168,7 @@ export default function SurgeryRegistrationForm() {
                         disabled={isSubmitting}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                        {field.value ? format(field.value, 'PPP', { locale: es }) : <span>Seleccionar fecha</span>}
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
@@ -176,8 +177,9 @@ export default function SurgeryRegistrationForm() {
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) => date < new Date(new Date().setHours(0,0,0,0)) || isSubmitting} // Disable past dates
+                      disabled={(date) => date < new Date(new Date().setHours(0,0,0,0)) || isSubmitting} // Deshabilitar fechas pasadas
                       initialFocus
+                      locale={es} // Spanish locale for calendar
                     />
                   </PopoverContent>
                 </Popover>
@@ -190,7 +192,7 @@ export default function SurgeryRegistrationForm() {
             name="time"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Surgery Time (HH:MM)</FormLabel>
+                <FormLabel>Hora de Cirugía (HH:MM)</FormLabel>
                 <FormControl>
                   <Input type="time" {...field} disabled={isSubmitting}/>
                 </FormControl>
@@ -205,18 +207,18 @@ export default function SurgeryRegistrationForm() {
           name="operatingRoom"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Operating Room</FormLabel>
+              <FormLabel>Quirófano</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select operating room" />
+                    <SelectValue placeholder="Seleccionar quirófano" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="OR-1">Operating Room 1</SelectItem>
-                  <SelectItem value="OR-2">Operating Room 2</SelectItem>
-                  <SelectItem value="OR-3">Operating Room 3</SelectItem>
-                  <SelectItem value="OR-EMG">Emergency OR</SelectItem>
+                  <SelectItem value="OR-1">Quirófano 1</SelectItem>
+                  <SelectItem value="OR-2">Quirófano 2</SelectItem>
+                  <SelectItem value="OR-3">Quirófano 3</SelectItem>
+                  <SelectItem value="OR-EMG">Quirófano de Emergencia</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -228,12 +230,12 @@ export default function SurgeryRegistrationForm() {
           {isSubmitting ? (
             <>
               <Hourglass className="mr-2 h-5 w-5 animate-spin" />
-              Submitting...
+              Registrando...
             </>
           ) : (
             <>
              <CheckCircle className="mr-2 h-5 w-5" />
-             Register Surgery
+             Registrar Cirugía
             </>
           )}
         </Button>

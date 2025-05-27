@@ -19,7 +19,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 
 export default function AppHeader() {
   // Placeholder user data
-  const userName = "Dr. Cirujano";
+  const userName = "Dr. Ejemplo"; // Can be localized or fetched
   const userInitials = userName.split(" ").map(n => n[0]).join("").substring(0,2).toUpperCase();
 
   return (
@@ -29,7 +29,7 @@ export default function AppHeader() {
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="shrink-0">
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle navigation menu</span>
+                <span className="sr-only">Alternar menú de navegación</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col p-0">
@@ -46,7 +46,6 @@ export default function AppHeader() {
           </Sheet>
       </div>
       
-      {/* SidebarTrigger for desktop in Sidebar component itself */}
       <div className="hidden md:flex items-center gap-2">
         <SidebarTrigger className="text-foreground hover:text-primary"/>
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-lg text-foreground hover:text-primary">
@@ -56,7 +55,6 @@ export default function AppHeader() {
       </div>
 
       <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4 justify-end">
-        {/* Future search bar can go here */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
@@ -64,17 +62,17 @@ export default function AppHeader() {
                 <AvatarImage src="https://placehold.co/40x40.png" alt={userName} data-ai-hint="user avatar" />
                 <AvatarFallback>{userInitials}</AvatarFallback>
               </Avatar>
-              <span className="sr-only">Toggle user menu</span>
+              <span className="sr-only">Alternar menú de usuario</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account ({userName})</DropdownMenuLabel>
+            <DropdownMenuLabel>Mi Cuenta ({userName})</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem>Support</DropdownMenuItem>
+            <DropdownMenuItem>Configuración</DropdownMenuItem>
+            <DropdownMenuItem>Soporte</DropdownMenuItem>
             <DropdownMenuSeparator />
             <Link href="/login">
-              <DropdownMenuItem>Logout</DropdownMenuItem>
+              <DropdownMenuItem>Cerrar Sesión</DropdownMenuItem>
             </Link>
           </DropdownMenuContent>
         </DropdownMenu>

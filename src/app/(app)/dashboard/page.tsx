@@ -6,25 +6,25 @@ import { APP_NAME } from '@/lib/constants';
 
 const dashboardFeatures = [
   {
-    title: 'Register New Surgery',
-    description: 'Quickly add a new surgical procedure to the schedule.',
+    title: 'Registrar Nueva Cirugía',
+    description: 'Añade rápidamente un nuevo procedimiento quirúrgico a la agenda.',
     href: '/cirugias/registrar',
     icon: UserPlus,
-    cta: 'Register Surgery',
+    cta: 'Registrar Cirugía',
   },
   {
-    title: 'View Surgical Schedule',
-    description: 'Access the main calendar to view and manage all upcoming surgeries.',
+    title: 'Ver Agenda Quirúrgica',
+    description: 'Accede al calendario principal para ver y gestionar todas las cirugías futuras.',
     href: '/agenda',
     icon: CalendarDays,
-    cta: 'View Schedule',
+    cta: 'Ver Agenda',
   },
   {
-    title: 'Today\'s Surgical Log',
-    description: 'See a detailed list of all surgeries and procedures scheduled for today.',
+    title: 'Registro Quirúrgico de Hoy',
+    description: 'Consulta una lista detallada de todas las cirugías y procedimientos programados para hoy.',
     href: '/agenda/hoy',
     icon: ListChecks,
-    cta: 'View Daily Log',
+    cta: 'Ver Registro Diario',
   },
 ];
 
@@ -33,10 +33,10 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div className="text-center md:text-left">
         <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-          Welcome to {APP_NAME}
+          Bienvenido a {APP_NAME}
         </h1>
         <p className="mt-2 text-lg text-muted-foreground">
-          Your central hub for managing surgical emergencies and schedules.
+          Tu centro de mando para gestionar emergencias y agendas quirúrgicas.
         </p>
       </div>
 
@@ -66,21 +66,21 @@ export default function DashboardPage() {
       
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle>Quick Stats (Placeholder)</CardTitle>
-          <CardDescription>Overview of today's activities.</CardDescription>
+          <CardTitle>Estadísticas Rápidas (Placeholder)</CardTitle>
+          <CardDescription>Resumen de las actividades de hoy.</CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-secondary/10 rounded-lg text-center">
             <p className="text-3xl font-bold text-primary">5</p>
-            <p className="text-sm text-muted-foreground">Surgeries Today</p>
+            <p className="text-sm text-muted-foreground">Cirugías Hoy</p>
           </div>
            <div className="p-4 bg-secondary/10 rounded-lg text-center">
             <p className="text-3xl font-bold text-primary">2</p>
-            <p className="text-sm text-muted-foreground">Available ORs</p>
+            <p className="text-sm text-muted-foreground">Quirófanos Disponibles</p>
           </div>
            <div className="p-4 bg-secondary/10 rounded-lg text-center">
             <p className="text-3xl font-bold text-primary">8</p>
-            <p className="text-sm text-muted-foreground">Pending Procedures</p>
+            <p className="text-sm text-muted-foreground">Procedimientos Pendientes</p>
           </div>
         </CardContent>
       </Card>

@@ -9,9 +9,9 @@ export default function SchedulePage() {
         <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-4">
           <CalendarDays className="h-8 w-8 text-primary" />
           <div>
-            <CardTitle className="text-2xl font-bold">Surgical Schedule Management</CardTitle>
+            <CardTitle className="text-2xl font-bold">Gestión de Agenda Quirúrgica</CardTitle>
             <CardDescription className="text-md">
-              View, add, or modify surgical appointments. (Calendar view placeholder)
+              Ver, añadir o modificar citas quirúrgicas. (Vista de calendario placeholder)
             </CardDescription>
           </div>
         </CardHeader>

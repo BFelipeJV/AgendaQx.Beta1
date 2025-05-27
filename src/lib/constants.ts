@@ -1,41 +1,40 @@
 import type { NavItem, IconName } from '@/lib/types';
-// Removed direct icon component imports as we now use names
 
 export const NAV_ITEMS_MAIN: NavItem[] = [
   {
-    title: 'Dashboard',
+    title: 'Panel Principal',
     href: '/dashboard',
     iconName: 'LayoutDashboard',
-    description: 'Overview and quick actions.',
+    description: 'Resumen y acciones rápidas.',
   },
   {
-    title: 'Register Surgery',
+    title: 'Registrar Cirugía',
     href: '/cirugias/registrar',
     iconName: 'UserPlus',
-    description: 'Add a new surgical procedure.',
+    description: 'Añadir un nuevo procedimiento quirúrgico.',
   },
   {
-    title: 'Surgical Schedule',
+    title: 'Agenda Quirúrgica',
     href: '/agenda',
     iconName: 'CalendarDays',
-    description: 'View and manage upcoming surgeries.',
+    description: 'Ver y gestionar las próximas cirugías.',
   },
   {
-    title: 'Daily Log',
+    title: 'Registro Diario',
     href: '/agenda/hoy',
     iconName: 'ListChecks',
-    description: "Today's scheduled procedures.",
+    description: 'Procedimientos programados para hoy.',
   },
 ];
 
 export const NAV_ITEMS_AUTH: NavItem[] = [
     {
-    title: 'Logout',
-    href: '/login', // Should ideally call a logout action
+    title: 'Cerrar Sesión',
+    href: '/login', // Idealmente llamaría a una acción de cierre de sesión
     iconName: 'LogOut',
-    description: 'Sign out of your account.',
+    description: 'Salir de tu cuenta.',
   }
 ]
 
-export const APP_NAME = "QX Scheduler";
+export const APP_NAME = "QX Scheduler"; // QX Agendador
 export const APP_HEADER_TITLE = "AGENDA QX";
