@@ -18,9 +18,25 @@ export interface Surgery {
 export interface NavItem {
   title: string;
   href: string;
-  iconName?: IconName; // Changed from 'icon' to 'iconName' and type to IconName (string key of LucideIcons)
+  iconName?: IconName; 
   disabled?: boolean;
   external?: boolean;
   label?: string;
   description?: string;
+}
+
+export interface StoredUser {
+  nombreCompleto: string;
+  email: string;
+  password?: string; // Password is not always needed for logic outside auth/registration
+  rol: 'cirujano' | 'administrador';
+}
+
+export interface ShiftAssignment {
+  id: string;
+  date: Date;
+  shiftLabel: string;
+  surgeons: string[]; 
+  bgColorClass: string; 
+  borderColorClass: string; 
 }

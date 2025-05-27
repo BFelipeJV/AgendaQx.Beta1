@@ -35,7 +35,7 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
   {
     title: 'Registrar Usuarios',
     href: '/admin/registrar-usuarios',
-    iconName: 'UserPlus', // Icono para registrar usuarios
+    iconName: 'UserPlus', 
     description: 'Crear nuevas cuentas de usuario para la plataforma.',
   },
 ];
@@ -51,3 +51,4 @@ export const NAV_ITEMS_AUTH: NavItem[] = [
 
 export const APP_NAME = "AgendaQx";
 export const APP_HEADER_TITLE = "AGENDA QX";
+export const MOCK_USERS_STORAGE_KEY = 'mockRegisteredUsers';
