@@ -1,11 +1,11 @@
+
 'use client';
 
-import React, { useState } from 'react';
-import { DayPicker, type DayContentProps } from 'react-day-picker';
+import React, { useState } from 'react'; // Added useState
+import { DayPicker, type DayContentProps, type DayModifiers } from 'react-day-picker';
 import 'react-day-picker/dist/style.css'; // Base styles for DayPicker
 import { es } from 'date-fns/locale';
-import { addYears, subYears, format, getMonth, getDate, isSameDay } from 'date-fns'; // Removed addMonths, subMonths as DayPicker handles it
-import { ChevronLeft, ChevronRight } from 'lucide-react'; // Kept for potential future custom elements if needed, but not used by default DayPicker nav
+import { addYears, subYears, format, getMonth, getDate, isSameDay } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -14,8 +14,13 @@ interface ShiftAssignment {
   date: Date;
   shiftLabel: string;
   surgeons: string[];
-  bgColorClass: string; // e.g., 'bg-teal-100 text-teal-800'
-  borderColorClass: string; // e.g., 'border-teal-300'
+  bgColorClass: string; 
+  borderColorClass: string; 
+}
+
+interface ShiftCalendarViewProps {
+  selectedDate?: Date;
+  onDateSelect: (date?: Date) => void;
 }
 
 // Mock data for May (adjust year as needed)
@@ -29,11 +34,11 @@ const dummyShiftData: ShiftAssignment[] = [
   // Week 2
   { id: 'shift5', date: new Date(currentYear, 4, 5), shiftLabel: 'Turno lunes', surgeons: ['Neira', 'Neufeld'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
   { id: 'shift6', date: new Date(currentYear, 4, 6), shiftLabel: 'Turno martes', surgeons: ['Astorga', 'Trepat'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift7', date: new Date(currentYear, 4, 7), shiftLabel: 'Turno miércoles', surgeons: [], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' }, // Empty for Carreño as in image
+  { id: 'shift7', date: new Date(currentYear, 4, 7), shiftLabel: 'Turno miércoles', surgeons: [], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' }, 
   { id: 'shift8', date: new Date(currentYear, 4, 8), shiftLabel: 'Turno jueves', surgeons: ['Arellano', 'Cáceres'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
   { id: 'shift9', date: new Date(currentYear, 4, 9), shiftLabel: 'Volante 1', surgeons: ['Figueroa', 'Oroz'], bgColorClass: 'bg-green-100 text-green-800', borderColorClass: 'border-green-300' },
   { id: 'shift10', date: new Date(currentYear, 4, 10), shiftLabel: 'Volante 2', surgeons: ['Jacubovsky', 'Cáceres'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift11', date: new Date(currentYear, 4, 11), shiftLabel: 'Turno jueves', surgeons: ['Arellano', 'López'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' }, // Adjusted, was "Turno Jueves" in image but on a Sat
+  { id: 'shift11', date: new Date(currentYear, 4, 11), shiftLabel: 'Turno jueves', surgeons: ['Arellano', 'López'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' }, 
   // Week 3
   { id: 'shift12', date: new Date(currentYear, 4, 12), shiftLabel: 'Turno lunes', surgeons: ['Neira', 'Neufeld'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
   { id: 'shift13', date: new Date(currentYear, 4, 13), shiftLabel: 'Turno martes', surgeons: ['Astorga', 'Lopez'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
@@ -48,7 +53,7 @@ const dummyShiftData: ShiftAssignment[] = [
   { id: 'shift21', date: new Date(currentYear, 4, 21), shiftLabel: 'Volante 1', surgeons: ['Figueroa', 'Oroz'], bgColorClass: 'bg-green-100 text-green-800', borderColorClass: 'border-green-300' },
   { id: 'shift22', date: new Date(currentYear, 4, 22), shiftLabel: 'Volante 2', surgeons: ['López'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
   { id: 'shift23', date: new Date(currentYear, 4, 23), shiftLabel: 'Turno jueves', surgeons: ['Carreño (desde 14:00)'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift24', date: new Date(currentYear, 4, 24), shiftLabel: 'Turno miércoles', surgeons: [], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' }, // Empty from image
+  { id: 'shift24', date: new Date(currentYear, 4, 24), shiftLabel: 'Turno miércoles', surgeons: [], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' }, 
   { id: 'shift25', date: new Date(currentYear, 4, 25), shiftLabel: 'Turno martes', surgeons: ['Astorga', 'Trepat'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
   // Week 5
   { id: 'shift26', date: new Date(currentYear, 4, 26), shiftLabel: 'Turno lunes', surgeons: ['Neira', 'Neufeld'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
@@ -73,7 +78,8 @@ function CustomDayContent(props: DayContentProps) {
     <div className={cn(
       "h-32 w-full p-1 text-sm relative flex flex-col justify-start items-start",
       !isCurrentMonth && "text-muted-foreground/50",
-      isCurrentMonth && "hover:bg-accent/10 cursor-pointer" // Basic hover for current month days
+       // Removed hover from here as DayPicker handles selection state styling
+      isCurrentMonth && "cursor-pointer"
     )}>
       <span className={cn(
         "absolute top-1 right-1 font-medium",
@@ -99,27 +105,35 @@ function CustomDayContent(props: DayContentProps) {
 }
 
 
-export default function ShiftCalendarView() {
-  const initialDate = new Date(currentYear, 4, 1); // May of current year
-  const [currentMonth, setCurrentMonth] = useState<Date>(initialDate);
+export default function ShiftCalendarView({ selectedDate, onDateSelect }: ShiftCalendarViewProps) {
+  const initialDate = new Date(currentYear, 4, 1); 
+  const [currentMonth, setCurrentMonth] = useState<Date>(selectedDate || initialDate); // Initialize with selectedDate or initialDate
   const fiveYearsAgo = subYears(new Date(), 5);
   const fiveYearsFromNow = addYears(new Date(), 5);
 
+  // Update currentMonth when selectedDate changes from parent, if it's in a different month
+  React.useEffect(() => {
+    if (selectedDate && getMonth(selectedDate) !== getMonth(currentMonth)) {
+      setCurrentMonth(selectedDate);
+    }
+  }, [selectedDate, currentMonth]);
+
   return (
     <div className="rounded-lg border bg-card text-card-foreground shadow-md p-4">
-      {/* Custom navigation buttons and header removed, DayPicker's captionLayout handles this */}
       <DayPicker
+        mode="single"
+        selected={selectedDate}
+        onSelect={onDateSelect}
         month={currentMonth}
         onMonthChange={setCurrentMonth}
         locale={es}
         showOutsideDays
         fixedWeeks
-        captionLayout="dropdown-buttons" // Enables dropdowns for month/year and prev/next buttons
-        fromDate={fiveYearsAgo} // Sets the earliest year selectable in dropdown
-        toDate={fiveYearsFromNow}   // Sets the latest year selectable in dropdown
+        captionLayout="dropdown-buttons" 
+        fromDate={fiveYearsAgo} 
+        toDate={fiveYearsFromNow}   
         components={{
           DayContent: CustomDayContent,
-          // IconLeft and IconRight can be customized if needed, but default icons will be used for dropdown-buttons layout
         }}
         
         className="w-full" 
@@ -131,23 +145,12 @@ export default function ShiftCalendarView() {
           head_cell: "w-[calc(100%/7)] py-2 text-sm font-medium text-muted-foreground text-center capitalize", 
           row: "flex w-full border-b last:border-b-0", 
           cell: "w-[calc(100%/7)] border-r last:border-r-0 text-center relative", 
-          day: "", 
-          day_selected: "", 
-          day_today: "font-bold", 
+          day: "", // Base day styling
+          day_selected: "bg-primary text-primary-foreground !text-primary-foreground rounded-md focus:outline-none ring-2 ring-primary ring-offset-2", // Style for selected day
+          day_today: "font-bold ring-1 ring-accent rounded-md", // Today's date with a ring
           day_outside: "text-muted-foreground/30",
-          // caption_label, nav_button_previous, nav_button_next are handled by captionLayout="dropdown-buttons"
-          // We don't need to hide them explicitly anymore if we want DayPicker's default controls.
-          // If specific styling for the new caption is needed, target .rdp-caption_label, .rdp-nav_button etc.
-          // For example, if built-in buttons are too small:
-          // nav_button: "h-8 w-8 p-0", // Example to make default nav buttons larger
         }}
       />
     </div>
   );
 }
-
-// Ensure these styles are in globals.css or handled by Tailwind if DayPicker defaults aren't sufficient:
-// .rdp-caption_label { font-size: 1.25rem; font-weight: 600; }
-// .rdp-nav_button { border: 1px solid hsl(var(--border)); border-radius: var(--radius); }
-// .rdp-dropdown_month, .rdp-dropdown_year { padding: 0.25rem 0.5rem; border-radius: var(--radius); border: 1px solid hsl(var(--border)); }
-
