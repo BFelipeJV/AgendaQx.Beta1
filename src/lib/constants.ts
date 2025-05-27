@@ -36,5 +36,5 @@ export const NAV_ITEMS_AUTH: NavItem[] = [
   }
 ]
 
-export const APP_NAME = "QX Scheduler"; // QX Agendador
+export const APP_NAME = "AgendaQx"; // Updated from "QX Scheduler"
 export const APP_HEADER_TITLE = "AGENDA QX";
