@@ -1,3 +1,4 @@
+
 import type { NavItem, IconName } from '@/lib/types';
 
 export const NAV_ITEMS_MAIN: NavItem[] = [
@@ -8,10 +9,10 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
     description: 'Resumen y acciones rápidas.',
   },
   {
-    title: 'Registrar Cirugía',
-    href: '/cirugias/registrar',
-    iconName: 'UserPlus',
-    description: 'Añadir un nuevo procedimiento quirúrgico.',
+    title: 'Registro de Atenciones', // Title was already updated
+    href: '/cirugias/registrar',    // Path remains to the new selection page
+    iconName: 'ListPlus',         // Changed icon to be more generic for "atenciones"
+    description: 'Seleccionar tipo de atención a registrar.',
   },
   {
     title: 'Agenda Quirúrgica',
@@ -36,5 +37,5 @@ export const NAV_ITEMS_AUTH: NavItem[] = [
   }
 ]
 
-export const APP_NAME = "AgendaQx"; // Updated from "QX Scheduler"
+export const APP_NAME = "AgendaQx";
 export const APP_HEADER_TITLE = "AGENDA QX";
