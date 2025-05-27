@@ -1,3 +1,8 @@
+import type * as LucideIcons from 'lucide-react';
+
+// This type will ensure that only valid Lucide icon names are used.
+export type IconName = keyof typeof LucideIcons;
+
 export interface Surgery {
   id: string;
   patientName: string;
@@ -13,7 +18,7 @@ export interface Surgery {
 export interface NavItem {
   title: string;
   href: string;
-  icon?: React.ComponentType<{ className?: string }>;
+  iconName?: IconName; // Changed from 'icon' to 'iconName' and type to IconName (string key of LucideIcons)
   disabled?: boolean;
   external?: boolean;
   label?: string;
