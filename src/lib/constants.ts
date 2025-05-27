@@ -29,8 +29,14 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
   {
     title: 'Calendario de Turnos',
     href: '/turnos',
-    iconName: 'CalendarClock', // O 'UsersRound'
+    iconName: 'CalendarClock',
     description: 'Gestionar y visualizar los turnos de los cirujanos.',
+  },
+  {
+    title: 'Registrar Usuarios',
+    href: '/admin/registrar-usuarios',
+    iconName: 'UserPlus', // Icono para registrar usuarios
+    description: 'Crear nuevas cuentas de usuario para la plataforma.',
   },
 ];
 
@@ -45,4 +51,3 @@ export const NAV_ITEMS_AUTH: NavItem[] = [
 
 export const APP_NAME = "AgendaQx";
 export const APP_HEADER_TITLE = "AGENDA QX";
-
