@@ -11,37 +11,38 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, CheckCircle, Clock, UserCog, FileText, Edit3, ChevronDown, XCircle } from 'lucide-react';
+import { PlusCircle, CheckCircle, Clock, UserCog, FileText, Edit3, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { differenceInHours, parseISO, isValid } from 'date-fns';
 
 // Dummy data for today's surgeries - adjust as needed for different sections
 const initialTodaysEntries: Surgery[] = [
-  { id: 's001', patientName: 'Eleonora Vance', patientId: 'P007', procedureType: 'Bypass Coronario', surgeon: 'Dr. Pérez', date: new Date().toISOString().split('T')[0], time: '08:00', operatingRoom: 'Q-1', status: 'Scheduled' },
-  { id: 's002', patientName: 'Marcos Cole', patientId: 'P008', procedureType: 'Reparación de Hernia', surgeon: 'Dr. López', date: new Date().toISOString().split('T')[0], time: '10:30', operatingRoom: 'Q-2', status: 'Completed' },
-  { id: 's003', patientName: 'Lena Petrova', patientId: 'P009', procedureType: 'Cesárea', surgeon: 'Dr. García', date: new Date().toISOString().split('T')[0], time: '12:00', operatingRoom: 'Q-EMG', status: 'Scheduled' },
-  { id: 's004', patientName: 'Raj Patel', patientId: 'P010', procedureType: 'Cirugía de Cataratas', surgeon: 'Dr. Lee', date: new Date().toISOString().split('T')[0], time: '14:00', operatingRoom: 'Q-3', status: 'Completed' },
-  { id: 's005', patientName: 'Sofía Reyes', patientId: 'P011', procedureType: 'Amigdalectomía', surgeon: 'Dr. Pérez', date: new Date().toISOString().split('T')[0], time: '16:00', operatingRoom: 'Q-1', status: 'Scheduled' },
+  { id: 's001', patientName: 'Eleonora Vance', patientId: 'P007', procedureType: 'Bypass Coronario', surgeon: 'Dr. Pérez', date: new Date().toISOString().split('T')[0], time: '08:00', operatingRoom: 'Q-1', status: 'Scheduled', entryTimestamp: new Date(new Date().setDate(new Date().getDate() -1)).toISOString() }, // Older than 24h
+  { id: 's002', patientName: 'Marcos Cole', patientId: 'P008', procedureType: 'Reparación de Hernia', surgeon: 'Dr. López', date: new Date().toISOString().split('T')[0], time: '10:30', operatingRoom: 'Q-2', status: 'Completed', entryTimestamp: new Date().toISOString() }, // Recent
+  { id: 's003', patientName: 'Lena Petrova', patientId: 'P009', procedureType: 'Cesárea', surgeon: 'Dr. García', date: new Date().toISOString().split('T')[0], time: '12:00', operatingRoom: 'Q-EMG', status: 'Scheduled', entryTimestamp: new Date().toISOString() },
+  { id: 's004', patientName: 'Raj Patel', patientId: 'P010', procedureType: 'Cirugía de Cataratas', surgeon: 'Dr. Lee', date: new Date().toISOString().split('T')[0], time: '14:00', operatingRoom: 'Q-3', status: 'Completed', entryTimestamp: new Date(new Date().setDate(new Date().getDate() -2)).toISOString() }, // Older than 24h
+  { id: 's005', patientName: 'Sofía Reyes', patientId: 'P011', procedureType: 'Amigdalectomía', surgeon: 'Dr. Pérez', date: new Date().toISOString().split('T')[0], time: '16:00', operatingRoom: 'Q-1', status: 'Scheduled', entryTimestamp: new Date().toISOString() },
 ];
 
 // Placeholder data for other sections
 const nonSurgicalPatientsData = [
-  { id: 'ns001', name: 'Ana Torres', diagnosis: 'Neumonía', attending: 'Dra. Vega' },
-  { id: 'ns002', name: 'Luis Rivas', diagnosis: 'Gastroenteritis', attending: 'Dr. Campos' },
+  { id: 'ns001', name: 'Ana Torres', diagnosis: 'Neumonía', attending: 'Dra. Vega', entryTimestamp: new Date().toISOString() },
+  { id: 'ns002', name: 'Luis Rivas', diagnosis: 'Gastroenteritis', attending: 'Dr. Campos', entryTimestamp: new Date(new Date().setHours(new Date().getHours() - 26)).toISOString() }, // > 24h ago
 ];
 
 const shiftNoveltiesData = [
-  { id: 'nv001', time: '09:15', text: 'Se retrasó cirugía de P007 por falta de material.', reportedBy: 'Enf. Carla Soto' },
-  { id: 'nv002', time: '13:00', text: 'Paciente P009 presentó reacción alérgica leve post-operatoria.', reportedBy: 'Dr. García' },
+  { id: 'nv001', time: '09:15', text: 'Se retrasó cirugía de P007 por falta de material.', reportedBy: 'Enf. Carla Soto', entryTimestamp: new Date().toISOString() },
+  { id: 'nv002', time: '13:00', text: 'Paciente P009 presentó reacción alérgica leve post-operatoria.', reportedBy: 'Dr. García', entryTimestamp: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString() }, // Older
 ];
 
 
 interface PatientCardProps {
   surgery: Surgery;
   onDragStart: (e: React.DragEvent<HTMLDivElement>, surgeryId: string, currentStatus: Surgery['status']) => void;
-  onEdit: (surgeryId: string) => void;
+  onEdit: (surgeryId: string, entryTimestamp?: string) => void;
 }
 
 const PatientCard = ({ surgery, onDragStart, onEdit }: PatientCardProps) => {
@@ -94,7 +95,7 @@ const PatientCard = ({ surgery, onDragStart, onEdit }: PatientCardProps) => {
         <p><strong>Quirófano:</strong> {surgery.operatingRoom}</p>
       </CardContent>
       <CardFooter className="flex justify-end gap-2 pt-3">
-        <Button variant="outline" size="sm" onClick={() => onEdit(surgery.id)}>
+        <Button variant="outline" size="sm" onClick={() => onEdit(surgery.id, surgery.entryTimestamp)}>
             <Edit3 className="mr-1 h-3 w-3" /> Editar
         </Button>
       </CardFooter>
@@ -102,7 +103,12 @@ const PatientCard = ({ surgery, onDragStart, onEdit }: PatientCardProps) => {
   );
 };
 
-const NonSurgicalPatientCard = ({ patient }: { patient: typeof nonSurgicalPatientsData[0] }) => (
+interface NonSurgicalPatientCardProps {
+    patient: typeof nonSurgicalPatientsData[0];
+    onEdit: (patientId: string, entryTimestamp?: string) => void;
+}
+
+const NonSurgicalPatientCard = ({ patient, onEdit }: NonSurgicalPatientCardProps) => (
   <Card className="mb-3 shadow-md hover:shadow-lg transition-shadow">
     <CardHeader className="pb-2">
         <CardTitle className="text-lg">{patient.name}</CardTitle>
@@ -112,12 +118,19 @@ const NonSurgicalPatientCard = ({ patient }: { patient: typeof nonSurgicalPatien
       <p><strong>Diagnóstico:</strong> {patient.diagnosis}</p>
     </CardContent>
     <CardFooter className="flex justify-end gap-2 pt-3">
-       <Button variant="outline" size="sm"><Edit3 className="mr-1 h-3 w-3" /> Ver Detalles</Button>
+       <Button variant="outline" size="sm" onClick={() => onEdit(patient.id, patient.entryTimestamp)}>
+            <Edit3 className="mr-1 h-3 w-3" /> Editar
+       </Button>
     </CardFooter>
   </Card>
 );
 
-const NoveltyCard = ({ novelty }: { novelty: typeof shiftNoveltiesData[0] }) => (
+interface NoveltyCardProps {
+    novelty: typeof shiftNoveltiesData[0];
+    onEdit: (noveltyId: string, entryTimestamp?: string) => void;
+}
+
+const NoveltyCard = ({ novelty, onEdit }: NoveltyCardProps) => (
   <Card className="mb-3 shadow-md hover:shadow-lg transition-shadow">
      <CardHeader className="pb-2">
         <CardTitle className="text-lg">Novedad a las {novelty.time}</CardTitle>
@@ -127,7 +140,9 @@ const NoveltyCard = ({ novelty }: { novelty: typeof shiftNoveltiesData[0] }) => 
       <p>{novelty.text}</p>
     </CardContent>
      <CardFooter className="flex justify-end gap-2 pt-3">
-       <Button variant="outline" size="sm"><Edit3 className="mr-1 h-3 w-3" /> Ver/Editar</Button>
+       <Button variant="outline" size="sm" onClick={() => onEdit(novelty.id, novelty.entryTimestamp)}>
+            <Edit3 className="mr-1 h-3 w-3" /> Editar
+       </Button>
     </CardFooter>
   </Card>
 );
@@ -140,14 +155,29 @@ export default function DailyLog() {
   const [shiftNovelties, setShiftNovelties] = useState(shiftNoveltiesData);
   const [draggingOver, setDraggingOver] = useState<Surgery['status'] | null>(null);
 
-  const handleEditSurgery = (surgeryId: string) => {
-    console.log(`Edit button clicked for surgery ID: ${surgeryId}`);
+  const isEditable = (entryTimestamp?: string): boolean => {
+    if (!entryTimestamp) return true; // If no timestamp, assume editable (for now)
+    const entryDate = parseISO(entryTimestamp);
+    if (!isValid(entryDate)) return true; // If invalid date, assume editable
+    return differenceInHours(new Date(), entryDate) <= 24;
+  };
+
+  const handleEdit = (itemId: string, itemType: string, entryTimestamp?: string) => {
+    const editable = isEditable(entryTimestamp);
+    let message = `Se intentó editar ${itemType} con ID: ${itemId}. `;
+    if (editable) {
+      message += "Este registro es editable (dentro de las 24h).";
+    } else {
+      message += "Este registro NO es editable (fuera de las 24h).";
+    }
+    message += " La funcionalidad de edición completa está pendiente.";
+
     toast({
-      title: "Editar Cirugía (Próximamente)",
-      description: `Se intentó editar la cirugía con ID: ${surgeryId}. Esta funcionalidad aún no está implementada.`,
-      variant: "default",
+      title: "Editar Registro (Próximamente)",
+      description: message,
+      variant: editable ? "default" : "destructive",
     });
-    // Future: Open a modal or navigate to an edit page for surgeryId
+    console.log(message);
   };
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, surgeryId: string, currentStatus: Surgery['status']) => {
@@ -184,7 +214,7 @@ export default function DailyLog() {
 
     setTodaysEntries(prevEntries =>
       prevEntries.map(surgery =>
-        surgery.id === draggedId ? { ...surgery, status: targetStatus } : surgery
+        surgery.id === draggedId ? { ...surgery, status: targetStatus, entryTimestamp: new Date().toISOString() } : surgery // Update timestamp on status change
       )
     );
     toast({ title: "Estado Actualizado", description: `La cirugía ${draggedId} se movió a ${targetStatus === 'Completed' ? 'Pacientes Operados' : 'Pendientes por Operar'}.`});
@@ -199,7 +229,7 @@ export default function DailyLog() {
       title: 'Pacientes Operados',
       icon: CheckCircle,
       data: completedSurgeries,
-      renderItem: (item: Surgery) => <PatientCard key={item.id} surgery={item} onDragStart={handleDragStart} onEdit={handleEditSurgery} />,
+      renderItem: (item: Surgery) => <PatientCard key={item.id} surgery={item} onDragStart={handleDragStart} onEdit={(id, ts) => handleEdit(id, "la cirugía", ts)} />,
       emptyText: "No hay pacientes registrados como operados hoy.",
       droppableStatus: 'Completed' as Surgery['status'],
       navigationPath: '/cirugias/registrar/procedimiento'
@@ -209,7 +239,7 @@ export default function DailyLog() {
       title: 'Pacientes No Quirúrgicos',
       icon: UserCog,
       data: nonSurgicalPatients,
-      renderItem: (item: typeof nonSurgicalPatients[0]) => <NonSurgicalPatientCard key={item.id} patient={item} />,
+      renderItem: (item: typeof nonSurgicalPatients[0]) => <NonSurgicalPatientCard key={item.id} patient={item} onEdit={(id, ts) => handleEdit(id, "el paciente no quirúrgico", ts)} />,
       emptyText: "No hay pacientes no quirúrgicos registrados hoy.",
       droppableStatus: null,
       navigationPath: '/cirugias/registrar/no-quirurgico'
@@ -219,7 +249,7 @@ export default function DailyLog() {
       title: 'Pendientes por Operar',
       icon: Clock,
       data: scheduledSurgeries,
-      renderItem: (item: Surgery) => <PatientCard key={item.id} surgery={item} onDragStart={handleDragStart} onEdit={handleEditSurgery} />,
+      renderItem: (item: Surgery) => <PatientCard key={item.id} surgery={item} onDragStart={handleDragStart} onEdit={(id, ts) => handleEdit(id, "la cirugía pendiente", ts)} />,
       emptyText: "No hay cirugías pendientes programadas para hoy.",
       droppableStatus: 'Scheduled' as Surgery['status'],
       navigationPath: '/cirugias/registrar/procedimiento'
@@ -229,7 +259,7 @@ export default function DailyLog() {
       title: 'Novedades',
       icon: FileText,
       data: shiftNovelties,
-      renderItem: (item: typeof shiftNovelties[0]) => <NoveltyCard key={item.id} novelty={item} />,
+      renderItem: (item: typeof shiftNovelties[0]) => <NoveltyCard key={item.id} novelty={item} onEdit={(id, ts) => handleEdit(id, "la novedad", ts)} />,
       emptyText: "No hay novedades registradas para el turno de hoy.",
       droppableStatus: null,
       navigationPath: '/cirugias/registrar/novedades-turno'
@@ -245,28 +275,24 @@ export default function DailyLog() {
       {accordionSections.map((section) => (
         <AccordionItem value={section.id} key={section.id} className="border rounded-lg shadow-md bg-card overflow-hidden">
           <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50 transition-colors group">
-            <div className="flex items-center justify-between w-full">
-                <div className="flex items-center text-lg font-semibold text-primary">
-                <section.icon className="mr-3 h-6 w-6" />
-                {section.title}
-                </div>
-                <div className="flex items-center gap-2">
-                {section.navigationPath && (
-                    <Link href={section.navigationPath} passHref legacyBehavior>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-primary rounded-full"
-                        onClick={(e) => e.stopPropagation()} // Prevent accordion from toggling
-                        aria-label={`Añadir a ${section.title}`}
-                    >
-                        <PlusCircle className="h-5 w-5" />
-                    </Button>
-                    </Link>
-                )}
-                <ChevronDown className="h-6 w-6 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                </div>
+            <div className="flex items-center text-lg font-semibold text-primary">
+              <section.icon className="mr-3 h-6 w-6" />
+              {section.title}
             </div>
+            {section.navigationPath && (
+                <Link href={section.navigationPath} passHref legacyBehavior>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-primary rounded-full ml-auto mr-2 group-data-[state=closed]:opacity-100 group-data-[state=open]:opacity-100" // Ensure button is always visible for click
+                    onClick={(e) => e.stopPropagation()} 
+                    aria-label={`Añadir a ${section.title}`}
+                >
+                    <PlusCircle className="h-5 w-5" />
+                </Button>
+                </Link>
+            )}
+            {/* The default ChevronDown from AccordionTrigger will be used here */}
           </AccordionTrigger>
           <AccordionContent
             className={cn(
@@ -288,6 +314,4 @@ export default function DailyLog() {
     </Accordion>
   );
 }
-    
-
     
