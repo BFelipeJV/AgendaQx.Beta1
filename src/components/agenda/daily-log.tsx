@@ -71,7 +71,7 @@ const PatientCard = ({ surgery, onDragStart, onEdit }: PatientCardProps) => {
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-lg">{surgery.procedureType}</CardTitle>
-            <CardDescription>Paciente: {surgery.patientName} (ID: {surgery.patientId})</CardDescription>
+            <CardDescription>Paciente: {surgery.patientName} (ID: {surgery.patientId || 'N/A'})</CardDescription>
           </div>
           <Badge variant={surgery.status === 'Cancelled' ? 'destructive' : 'outline'} className={cn("capitalize text-sm py-1 px-2",
             {"text-blue-700 bg-blue-100 border-blue-300": surgery.status === 'Scheduled'},
@@ -85,6 +85,9 @@ const PatientCard = ({ surgery, onDragStart, onEdit }: PatientCardProps) => {
         <p><strong>Hora:</strong> {surgery.time || 'N/A'}</p>
         <p><strong>Cirujano:</strong> {surgery.surgeon || 'N/A'}</p>
         <p><strong>Quirófano/Cama:</strong> {surgery.operatingRoom || surgery.ubicacionCama || 'N/A'}</p>
+        <p><strong>Edad:</strong> {surgery.edad || 'N/A'}</p>
+        <p><strong>Diag. Pre-Op:</strong> {surgery.diagnosticoPreOperatorio || 'N/A'}</p>
+        <p><strong>Diag. Post-Op:</strong> {surgery.diagnosticoPostOperatorio || 'N/A'}</p>
       </CardContent>
       <CardFooter className="flex justify-end gap-2 pt-3">
         <Button variant="outline" size="sm" onClick={() => onEdit(surgery.id, surgery.entryTimestamp)}>
@@ -148,16 +151,17 @@ export default function DailyLog() {
   const [draggingOver, setDraggingOver] = useState<Surgery['status'] | null>(null);
 
   useEffect(() => {
-    // Load surgeries from localStorage
     try {
       const storedSurgeriesJSON = localStorage.getItem(MOCK_SURGERIES_STORAGE_KEY);
       if (storedSurgeriesJSON) {
         const allStoredSurgeries: Surgery[] = JSON.parse(storedSurgeriesJSON);
-        // Filter for today's surgeries
         const todayFilteredSurgeries = allStoredSurgeries.filter(surgery => 
             surgery.date && isToday(parseISO(surgery.date))
         );
         setTodaysSurgeries(todayFilteredSurgeries);
+        console.log("Cirugías cargadas de localStorage:", todayFilteredSurgeries);
+      } else {
+        console.log("No hay cirugías en localStorage.");
       }
     } catch (error) {
       console.error("Error loading surgeries from localStorage:", error);
@@ -170,25 +174,24 @@ export default function DailyLog() {
     // Placeholder: Load non-surgical and novelties from their respective localStorage keys if implemented
   }, [toast]);
 
-  const saveSurgeriesToLocalStorage = (updatedSurgeries: Surgery[]) => {
+  const saveSurgeriesToLocalStorage = (updatedTodaysSurgeries: Surgery[]) => {
     try {
-      // We need to merge updatedSurgeries with other surgeries in localStorage
-      // that are not for today to avoid losing them.
       const storedSurgeriesJSON = localStorage.getItem(MOCK_SURGERIES_STORAGE_KEY);
       let allSurgeries: Surgery[] = storedSurgeriesJSON ? JSON.parse(storedSurgeriesJSON) : [];
       
-      // Get IDs of today's surgeries being updated
-      const updatedTodayIds = new Set(updatedSurgeries.map(s => s.id));
+      const updatedTodayIds = new Set(updatedTodaysSurgeries.map(s => s.id));
       
-      // Filter out old versions of today's surgeries and add new versions
-      allSurgeries = allSurgeries.filter(s => !updatedTodayIds.has(s.id));
-      allSurgeries.push(...updatedSurgeries);
+      allSurgeries = allSurgeries.filter(s => {
+        if (!s.date || !isToday(parseISO(s.date))) { // Keep non-today's surgeries
+          return true;
+        }
+        return !updatedTodayIds.has(s.id); // Remove old versions of today's surgeries
+      });
+      allSurgeries.push(...updatedTodaysSurgeries); // Add new/updated versions of today's surgeries
       
-      // Filter for today again for local state, but save all to localStorage
-      const todayFiltered = allSurgeries.filter(s => s.date && isToday(parseISO(s.date)));
-      setTodaysSurgeries(todayFiltered);
-
       localStorage.setItem(MOCK_SURGERIES_STORAGE_KEY, JSON.stringify(allSurgeries));
+      setTodaysSurgeries(updatedTodaysSurgeries); // Update local state for UI re-render
+      console.log("Cirugías guardadas en localStorage:", allSurgeries);
 
     } catch (error) {
       console.error("Error saving surgeries to localStorage:", error);
@@ -200,30 +203,40 @@ export default function DailyLog() {
     }
   };
 
-
   const isEditable = (entryTimestamp?: string): boolean => {
-    if (!entryTimestamp) return true; 
+    if (!entryTimestamp) {
+      console.warn("isEditable: entryTimestamp is missing. Defaulting to not editable.");
+      return false; 
+    }
     const entryDate = parseISO(entryTimestamp);
-    if (!isValid(entryDate)) return true; 
-    return differenceInHours(new Date(), entryDate) <= 24;
+    if (!isValid(entryDate)) {
+      console.warn(`isEditable: entryTimestamp '${entryTimestamp}' is invalid. Defaulting to not editable.`);
+      return false; 
+    }
+    const hoursDifference = differenceInHours(new Date(), entryDate);
+    console.log(`isEditable: Timestamp: ${entryTimestamp}, Current Time: ${new Date().toISOString()}, Parsed Entry Date: ${entryDate.toISOString()}, Hours difference: ${hoursDifference}`);
+    return hoursDifference <= 24;
   };
 
-  const handleEdit = (itemId: string, itemType: string, entryTimestamp: string) => {
+  const handleEdit = (itemId: string, itemType: string, entryTimestamp: string | undefined) => {
+    console.log(`Attempting to edit ${itemType} ID: ${itemId} with timestamp: ${entryTimestamp}`);
     const editable = isEditable(entryTimestamp);
-    let message = `Se intentó editar ${itemType} (ID: ${itemId}). `;
-    if (editable) {
-      message += "Este registro ES editable (dentro de las 24h).";
-    } else {
-      message += "Este registro NO es editable (han pasado más de 24h).";
-    }
-    message += " La funcionalidad de edición completa está pendiente.";
 
-    toast({
-      title: "Editar Registro (Próximamente)",
-      description: message,
-      variant: editable ? "default" : "destructive",
-    });
-    console.log(message, `Timestamp: ${entryTimestamp}`);
+    if (editable) {
+      toast({
+        title: "Edición Permitida (Próximamente)",
+        description: `Este registro ${itemType} (ID: ${itemId}) ES editable (creado/modificado en las últimas 24h). La funcionalidad completa de edición está pendiente.`,
+        variant: "default",
+      });
+      console.log(`EDIT ACTION (Permitted): ${itemType} ID: ${itemId}, Timestamp: ${entryTimestamp}, Is Editable: ${editable}`);
+    } else {
+      toast({
+        title: "Edición Bloqueada",
+        description: `Este registro ${itemType} (ID: ${itemId}) NO es editable (han pasado más de 24h desde su creación/modificación o la fecha es inválida/faltante).`,
+        variant: "destructive",
+      });
+      console.log(`EDIT ACTION (Blocked): ${itemType} ID: ${itemId}, Timestamp: ${entryTimestamp}, Is Editable: ${editable}`);
+    }
   };
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, surgeryId: string, currentStatus: Surgery['status']) => {
@@ -258,16 +271,16 @@ export default function DailyLog() {
       return;
     }
 
-    const updatedSurgeries = todaysSurgeries.map(surgery =>
-      surgery.id === draggedId ? { ...surgery, status: targetStatus, entryTimestamp: new Date().toISOString() } : surgery
+    const newEntryTimestamp = new Date().toISOString();
+    const updatedMappedSurgeries = todaysSurgeries.map(surgery =>
+      surgery.id === draggedId ? { ...surgery, status: targetStatus, entryTimestamp: newEntryTimestamp } : surgery
     );
-    saveSurgeriesToLocalStorage(updatedSurgeries); // Save to state and localStorage
-    toast({ title: "Estado Actualizado", description: `La cirugía ${draggedId} se movió a ${targetStatus === 'Completed' ? 'Pacientes Operados' : 'Pendientes por Operar'}.`});
+    saveSurgeriesToLocalStorage(updatedMappedSurgeries);
+    toast({ title: "Estado Actualizado", description: `La cirugía ${draggedId} se movió a ${targetStatus === 'Completed' ? 'Pacientes Operados' : 'Pendientes por Operar'}. Fecha de modificación actualizada.`});
   };
 
   const scheduledSurgeries = todaysSurgeries.filter(s => s.status === 'Scheduled');
   const completedSurgeries = todaysSurgeries.filter(s => s.status === 'Completed');
-  // Add cancelledSurgeries if needed
 
   const accordionSections = [
     {
@@ -278,7 +291,7 @@ export default function DailyLog() {
       renderItem: (item: Surgery) => <PatientCard key={item.id} surgery={item} onDragStart={handleDragStart} onEdit={(id, ts) => handleEdit(id, "la cirugía", ts)} />,
       emptyText: "No hay pacientes registrados como operados hoy.",
       droppableStatus: 'Completed' as Surgery['status'],
-      navigationPath: '/cirugias/registrar/procedimiento' // Path to register a new procedure that would be 'completed'
+      navigationPath: '/cirugias/registrar/procedimiento'
     },
     {
       id: 'no-quirurgicos',
@@ -298,7 +311,7 @@ export default function DailyLog() {
       renderItem: (item: Surgery) => <PatientCard key={item.id} surgery={item} onDragStart={handleDragStart} onEdit={(id, ts) => handleEdit(id, "la cirugía pendiente", ts)} />,
       emptyText: "No hay cirugías pendientes programadas para hoy.",
       droppableStatus: 'Scheduled' as Surgery['status'],
-      navigationPath: '/cirugias/registrar/procedimiento' // Path to register a new procedure that would be 'scheduled' (if form supported it)
+      navigationPath: '/cirugias/registrar/procedimiento'
     },
     {
       id: 'novedades',
@@ -312,9 +325,22 @@ export default function DailyLog() {
     },
   ];
 
-  if (todaysSurgeries.length === 0 && nonSurgicalPatients.length === 0 && shiftNovelties.length === 0) {
-    return <p className="text-muted-foreground text-center py-8">No hay registros para hoy. Intente añadir algunos desde "Registro de Atenciones".</p>;
+  const noDataForAllSections = todaysSurgeries.length === 0 && nonSurgicalPatients.length === 0 && shiftNovelties.length === 0;
+
+  if (noDataForAllSections) {
+    return (
+        <div className="text-center py-8">
+            <p className="text-muted-foreground mb-4">No hay registros para hoy.</p>
+            <Link href="/cirugias/registrar" passHref>
+                <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Añadir Registro de Atención
+                </Button>
+            </Link>
+        </div>
+    );
   }
+
 
   return (
     <Accordion type="multiple" className="w-full space-y-4" defaultValue={['pendientes', 'operados']}>
@@ -325,19 +351,22 @@ export default function DailyLog() {
               <section.icon className="mr-3 h-6 w-6" />
               {section.title}
             </div>
-            {section.navigationPath && (
-                <Link href={section.navigationPath} passHref legacyBehavior>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-primary rounded-full ml-auto mr-2 group-data-[state=closed]:opacity-100 group-data-[state=open]:opacity-100"
-                    onClick={(e) => e.stopPropagation()} 
-                    aria-label={`Añadir a ${section.title}`}
-                >
-                    <PlusCircle className="h-5 w-5" />
-                </Button>
-                </Link>
-            )}
+            <div className="ml-auto flex items-center">
+                {section.navigationPath && (
+                    <Link href={section.navigationPath} passHref legacyBehavior>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-primary rounded-full mr-1 opacity-100 hover:opacity-100 data-[state=open]:opacity-100 data-[state=closed]:opacity-100"
+                        onClick={(e) => e.stopPropagation()} 
+                        aria-label={`Añadir a ${section.title}`}
+                    >
+                        <PlusCircle className="h-5 w-5" />
+                    </Button>
+                    </Link>
+                )}
+                {/* Chevron is now implicitly handled by AccordionTrigger styling from ShadCN */}
+            </div>
           </AccordionTrigger>
           <AccordionContent
             className={cn(
@@ -359,3 +388,4 @@ export default function DailyLog() {
     </Accordion>
   );
 }
+
