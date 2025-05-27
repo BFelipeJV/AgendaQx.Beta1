@@ -22,12 +22,11 @@ import { useToast } from '@/hooks/use-toast';
 // Initial shift data (can be moved or fetched eventually)
 const currentYear = new Date().getFullYear();
 const initialShiftData: ShiftAssignment[] = [
-  // Copied from dummyShiftData in shift-calendar-view, ensure dates are valid
-  { id: 'shift1', date: new Date(currentYear, 4, 1), shiftLabel: 'Turno Jueves', surgeons: ['Cirujano Asignado 1', 'Cirujano Asignado 2'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift2', date: new Date(currentYear, 4, 2), shiftLabel: 'Turno Lunes', surgeons: ['Cirujano Asignado 3'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
-  { id: 'shift3', date: new Date(currentYear, 4, 3), shiftLabel: 'Volante 1', surgeons: ['Cirujano Asignado 4', 'Cirujano Asignado 5'], bgColorClass: 'bg-green-100 text-green-800', borderColorClass: 'border-green-300' },
-  { id: 'shift4', date: new Date(currentYear, 4, 4), shiftLabel: 'Volante 2', surgeons: ['Cirujano Asignado 6'], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift5', date: new Date(currentYear, 4, 5), shiftLabel: 'Turno Lunes', surgeons: ['Cirujano Asignado 1', 'Cirujano Asignado 2'], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
+  { id: 'shift1', date: new Date(currentYear, 4, 1), shiftLabel: 'Turno Jueves', surgeons: [], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
+  { id: 'shift2', date: new Date(currentYear, 4, 2), shiftLabel: 'Turno Lunes', surgeons: [], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
+  { id: 'shift3', date: new Date(currentYear, 4, 3), shiftLabel: 'Volante 1', surgeons: [], bgColorClass: 'bg-green-100 text-green-800', borderColorClass: 'border-green-300' },
+  { id: 'shift4', date: new Date(currentYear, 4, 4), shiftLabel: 'Volante 2', surgeons: [], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
+  { id: 'shift5', date: new Date(currentYear, 4, 5), shiftLabel: 'Turno Lunes', surgeons: [], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
   // Add more shifts as needed to match the original dummy data structure
 ];
 
@@ -158,3 +157,4 @@ export default function ShiftCalendarPage() {
     </div>
   );
 }
+
