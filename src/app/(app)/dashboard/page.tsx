@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,11 +7,11 @@ import { APP_NAME } from '@/lib/constants';
 
 const dashboardFeatures = [
   {
-    title: 'Registrar Nueva Cirugía',
-    description: 'Añade rápidamente un nuevo procedimiento quirúrgico a la agenda.',
+    title: 'Registro de Atenciones',
+    description: 'Añade un nuevo registro de atención.',
     href: '/cirugias/registrar',
     icon: UserPlus,
-    cta: 'Registrar Cirugía',
+    cta: 'Registrar Atención',
   },
   {
     title: 'Ver Agenda Quirúrgica',
