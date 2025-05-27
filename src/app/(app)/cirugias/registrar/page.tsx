@@ -5,54 +5,40 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ListPlus, FilePlus2, BedDouble, FileClock, ClipboardEdit, ArrowRight } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 
 interface AttentionOption {
   title: string;
   description: string;
-  href?: string;
+  href: string; // All options will now have an href
   icon: React.ElementType;
-  action?: () => void;
-  disabled?: boolean;
+  disabled?: boolean; // Kept for potential future use, but not used now
 }
 
 export default function RegisterAttentionPage() {
-  const { toast } = useToast();
-
-  const handlePlaceholderClick = (optionTitle: string) => {
-    toast({
-      title: 'Funcionalidad Pendiente',
-      description: `La opción "${optionTitle}" aún no está implementada.`,
-    });
-  };
-
   const attentionOptions: AttentionOption[] = [
     {
       title: 'Cirugía o Procedimiento',
-      description: 'Registrar una nueva cirugía o procedimiento programado.',
+      description: 'Registrar una nueva cirugía o procedimiento.',
       href: '/cirugias/registrar/procedimiento',
       icon: FilePlus2,
     },
     {
       title: 'Ingreso Paciente No Quirúrgico',
       description: 'Registrar el ingreso de un paciente que no requiere cirugía.',
+      href: '/cirugias/registrar/no-quirurgico',
       icon: BedDouble,
-      action: () => handlePlaceholderClick('Ingreso Paciente No Quirúrgico'),
-      disabled: true,
     },
     {
       title: 'Cirugía o Procedimiento Pendiente',
       description: 'Registrar o actualizar información de un procedimiento pendiente.',
+      href: '/cirugias/registrar/pendiente',
       icon: FileClock,
-      action: () => handlePlaceholderClick('Cirugía o Procedimiento Pendiente'),
-      disabled: true,
     },
     {
       title: 'Novedades del Turno',
       description: 'Anotar novedades relevantes ocurridas durante el turno.',
+      href: '/cirugias/registrar/novedades-turno',
       icon: ClipboardEdit,
-      action: () => handlePlaceholderClick('Novedades del Turno'),
-      disabled: true,
     },
   ];
 
@@ -70,40 +56,25 @@ export default function RegisterAttentionPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {attentionOptions.map((option) => (
-            option.href ? (
-              <Link href={option.href} key={option.title} passHref>
-                <Button
-                  variant="outline"
-                  className="w-full h-auto py-4 flex items-center justify-start text-left rounded-lg shadow-sm hover:shadow-md transition-shadow"
-                  disabled={option.disabled}
-                >
-                  <option.icon className="h-7 w-7 mr-4 text-primary flex-shrink-0" />
-                  <div className="flex-grow">
-                    <p className="font-semibold text-base text-foreground">{option.title}</p>
-                    <p className="text-sm text-muted-foreground">{option.description}</p>
-                  </div>
-                  {!option.disabled && <ArrowRight className="h-5 w-5 ml-auto text-muted-foreground" />}
-                </Button>
-              </Link>
-            ) : (
+            <Link href={option.href} key={option.title} passHref>
               <Button
-                key={option.title}
                 variant="outline"
                 className="w-full h-auto py-4 flex items-center justify-start text-left rounded-lg shadow-sm hover:shadow-md transition-shadow"
-                onClick={option.action}
-                disabled={option.disabled}
+                disabled={option.disabled} 
               >
                 <option.icon className="h-7 w-7 mr-4 text-primary flex-shrink-0" />
                 <div className="flex-grow">
                   <p className="font-semibold text-base text-foreground">{option.title}</p>
                   <p className="text-sm text-muted-foreground">{option.description}</p>
                 </div>
-                {option.disabled && <span className="ml-auto text-xs text-muted-foreground">(Próximamente)</span>}
+                {!option.disabled && <ArrowRight className="h-5 w-5 ml-auto text-muted-foreground" />}
               </Button>
-            )
+            </Link>
           ))}
         </CardContent>
       </Card>
     </div>
   );
 }
+
+    

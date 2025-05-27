@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,59 +15,60 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale'; // Import Spanish locale for date-fns
-import { CalendarIcon, CheckCircle, Hourglass } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Textarea } from '@/components/ui/textarea'; // Import Textarea
+import { CheckCircle, Hourglass } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
-const surgerySchema = z.object({
-  patientName: z.string().min(2, { message: 'El nombre del paciente debe tener al menos 2 caracteres.' }),
-  patientId: z.string().min(1, { message: 'El ID del paciente es obligatorio.' }),
-  procedureType: z.string().min(3, { message: 'El tipo de procedimiento es obligatorio.' }),
-  surgeon: z.string().min(3, { message: 'El nombre del cirujano es obligatorio.' }),
-  date: z.date({ required_error: 'La fecha de la cirugía es obligatoria.' }),
-  time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: 'Formato de hora inválido (HH:MM).' }),
-  operatingRoom: z.string().min(1, { message: 'El quirófano es obligatorio.' }),
+const surgeryRegistrationSchema = z.object({
+  tipoIntervencion: z.enum(['cirugia', 'procedimiento'], {
+    required_error: 'Debe seleccionar el tipo de intervención.',
+  }),
+  nombrePaciente: z.string().min(2, { message: 'El nombre del paciente debe tener al menos 2 caracteres.' }),
+  edad: z.coerce.number({ invalid_type_error: 'La edad debe ser un número.' }).int().positive({ message: 'La edad debe ser un número positivo.' }).min(0, { message: 'La edad no puede ser negativa.' }),
+  rut: z.string().min(7, { message: 'El RUT debe tener al menos 7 caracteres.' }).regex(/^[0-9Kk.-]+$/, { message: 'RUT inválido.'}),
+  ubicacionCama: z.string().min(1, { message: 'La ubicación/cama es obligatoria.' }),
+  cirugiaProcedimientoRealizado: z.string().min(3, { message: 'El nombre de la cirugía o procedimiento es obligatorio.' }),
+  diagnostico: z.string().optional(),
+  diagnosticoPreoperatorio: z.string().min(1, { message: 'El diagnóstico pre-operatorio es obligatorio.' }),
+  diagnosticoPostoperatorio: z.string().min(1, { message: 'El diagnóstico post-operatorio es obligatorio.' }),
+  tratamiento: z.string().optional(),
+  comentariosAdicionales: z.string().optional(),
 });
 
-type SurgeryFormValues = z.infer<typeof surgerySchema>;
+type SurgeryRegistrationFormValues = z.infer<typeof surgeryRegistrationSchema>;
 
 export default function SurgeryRegistrationForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<SurgeryFormValues>({
-    resolver: zodResolver(surgerySchema),
+  const form = useForm<SurgeryRegistrationFormValues>({
+    resolver: zodResolver(surgeryRegistrationSchema),
     defaultValues: {
-      patientName: '',
-      patientId: '',
-      procedureType: '',
-      surgeon: '',
-      time: '09:00', // Hora predeterminada
-      operatingRoom: '',
+      tipoIntervencion: undefined,
+      nombrePaciente: '',
+      edad: undefined,
+      rut: '',
+      ubicacionCama: '',
+      cirugiaProcedimientoRealizado: '',
+      diagnostico: '',
+      diagnosticoPreoperatorio: '',
+      diagnosticoPostoperatorio: '',
+      tratamiento: '',
+      comentariosAdicionales: '',
     },
   });
 
-  async function onSubmit(values: SurgeryFormValues) {
+  async function onSubmit(values: SurgeryRegistrationFormValues) {
     setIsSubmitting(true);
-    console.log('Datos de Registro de Cirugía:', values);
+    console.log('Datos de Registro Quirúrgico:', values);
     // Simular llamada API
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     toast({
-      title: 'Cirugía Registrada',
-      description: `La cirugía para ${values.patientName} ha sido programada exitosamente.`,
+      title: 'Registro Exitoso',
+      description: `El registro para ${values.nombrePaciente} ha sido guardado.`,
       action: (
         <div className="flex items-center text-green-500">
           <CheckCircle className="mr-2 h-5 w-5" />
@@ -81,15 +83,47 @@ export default function SurgeryRegistrationForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <FormField
+          control={form.control}
+          name="tipoIntervencion"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel>Tipo de Intervención *</FormLabel>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="flex flex-col space-y-1 md:flex-row md:space-x-4 md:space-y-0"
+                  disabled={isSubmitting}
+                >
+                  <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="cirugia" />
+                    </FormControl>
+                    <FormLabel className="font-normal">Cirugía</FormLabel>
+                  </FormItem>
+                  <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="procedimiento" />
+                    </FormControl>
+                    <FormLabel className="font-normal">Procedimiento</FormLabel>
+                  </FormItem>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
-            name="patientName"
+            name="nombrePaciente"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nombre del Paciente</FormLabel>
+                <FormLabel>Nombre Completo del Paciente *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ej: Juan Pérez" {...field} disabled={isSubmitting}/>
+                  <Input placeholder="Ej: Juan Pérez Rodríguez" {...field} disabled={isSubmitting}/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -97,12 +131,12 @@ export default function SurgeryRegistrationForm() {
           />
           <FormField
             control={form.control}
-            name="patientId"
+            name="rut"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>ID del Paciente</FormLabel>
+                <FormLabel>RUT del Paciente *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ej: P123456789" {...field} disabled={isSubmitting}/>
+                  <Input placeholder="Ej: 12.345.678-K" {...field} disabled={isSubmitting}/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -110,91 +144,28 @@ export default function SurgeryRegistrationForm() {
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="procedureType"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tipo de Procedimiento</FormLabel>
-              <FormControl>
-                <Input placeholder="Ej: Apendicectomía" {...field} disabled={isSubmitting}/>
-              </FormControl>
-              <FormDescription>Especifique el tipo de procedimiento quirúrgico.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="surgeon"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Cirujano</FormLabel>
-               <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar cirujano" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="Dr. Smith">Dr. Smith</SelectItem>
-                  <SelectItem value="Dr. Jones">Dr. Jones</SelectItem>
-                  <SelectItem value="Dr. Garcia">Dr. García</SelectItem>
-                  <SelectItem value="Dr. Lee">Dr. Lee</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
-            name="date"
+            name="edad"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Fecha de Cirugía</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={'outline'}
-                        className={cn(
-                          'w-full justify-start text-left font-normal',
-                          !field.value && 'text-muted-foreground'
-                        )}
-                        disabled={isSubmitting}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {field.value ? format(field.value, 'PPP', { locale: es }) : <span>Seleccionar fecha</span>}
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) => date < new Date(new Date().setHours(0,0,0,0)) || isSubmitting} // Deshabilitar fechas pasadas
-                      initialFocus
-                      locale={es} // Spanish locale for calendar
-                    />
-                  </PopoverContent>
-                </Popover>
+              <FormItem>
+                <FormLabel>Edad *</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="Ej: 35" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} disabled={isSubmitting}/>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
           <FormField
             control={form.control}
-            name="time"
+            name="ubicacionCama"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Hora de Cirugía (HH:MM)</FormLabel>
+                <FormLabel>Ubicación / Cama *</FormLabel>
                 <FormControl>
-                  <Input type="time" {...field} disabled={isSubmitting}/>
+                  <Input placeholder="Ej: Sala 3, Cama 12" {...field} disabled={isSubmitting}/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -204,23 +175,83 @@ export default function SurgeryRegistrationForm() {
         
         <FormField
           control={form.control}
-          name="operatingRoom"
+          name="cirugiaProcedimientoRealizado"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Quirófano</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar quirófano" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="OR-1">Quirófano 1</SelectItem>
-                  <SelectItem value="OR-2">Quirófano 2</SelectItem>
-                  <SelectItem value="OR-3">Quirófano 3</SelectItem>
-                  <SelectItem value="OR-EMG">Quirófano de Emergencia</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormLabel>Cirugía / Procedimiento Realizado *</FormLabel>
+              <FormControl>
+                <Input placeholder="Ej: Apendicectomía laparoscópica" {...field} disabled={isSubmitting}/>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="diagnosticoPreoperatorio"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Diagnóstico Pre-operatorio *</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Describa el diagnóstico pre-operatorio..." {...field} disabled={isSubmitting}/>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="diagnosticoPostoperatorio"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Diagnóstico Post-operatorio *</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Describa el diagnóstico post-operatorio..." {...field} disabled={isSubmitting}/>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="diagnostico"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Diagnóstico (General)</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Detalles adicionales del diagnóstico (opcional)..." {...field} disabled={isSubmitting}/>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="tratamiento"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tratamiento</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Detalles del tratamiento (opcional)..." {...field} disabled={isSubmitting}/>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="comentariosAdicionales"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Comentarios Adicionales</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Cualquier otro comentario relevante (opcional)..." {...field} disabled={isSubmitting}/>
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -235,7 +266,7 @@ export default function SurgeryRegistrationForm() {
           ) : (
             <>
              <CheckCircle className="mr-2 h-5 w-5" />
-             Registrar Cirugía
+             Registrar
             </>
           )}
         </Button>
@@ -243,3 +274,5 @@ export default function SurgeryRegistrationForm() {
     </Form>
   );
 }
+
+    
