@@ -23,7 +23,7 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
   {
     title: 'Registro Diario',
     href: '/agenda/hoy',
-    iconName: 'ListChecks',
+    iconName: 'ListChecks', // Changed from BookOpenCheck to ListChecks as per dashboard
     description: 'Procedimientos programados para hoy.',
   },
   {
@@ -35,7 +35,7 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
   {
     title: 'Registrar Usuarios',
     href: '/admin/registrar-usuarios',
-    iconName: 'UserPlus', 
+    iconName: 'UserPlus',
     description: 'Crear nuevas cuentas de usuario para la plataforma.',
   },
 ];
@@ -43,7 +43,7 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
 export const NAV_ITEMS_AUTH: NavItem[] = [
     {
     title: 'Cerrar Sesión',
-    href: '/login', 
+    href: '/login',
     iconName: 'LogOut',
     description: 'Salir de tu cuenta.',
   }
@@ -53,4 +53,5 @@ export const APP_NAME = "AgendaQx";
 export const APP_HEADER_TITLE = "AGENDA QX";
 export const MOCK_USERS_STORAGE_KEY = 'mockRegisteredUsers';
 export const MOCK_SURGERIES_STORAGE_KEY = 'mockRegisteredSurgeries';
-
+export const MOCK_NON_SURGICAL_STORAGE_KEY = 'mockRegisteredNonSurgical';
+export const MOCK_NOVELTIES_STORAGE_KEY = 'mockRegisteredNovelties';
