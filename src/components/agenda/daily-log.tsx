@@ -17,18 +17,160 @@ import { cn } from '@/lib/utils';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { differenceInHours, parseISO, isValid, isToday } from 'date-fns';
+import { differenceInHours, parseISO, isValid, isToday, format } from 'date-fns';
 
-// Initial data for non-surgical patients and novelties
+// --- More Descriptive Initial Dummy Data ---
+const todayDateString = format(new Date(), 'yyyy-MM-dd');
+const yesterdayDateString = format(new Date(new Date().setDate(new Date().getDate() - 1)), 'yyyy-MM-dd');
+const tomorrowDateString = format(new Date(new Date().setDate(new Date().getDate() + 1)), 'yyyy-MM-dd');
+
+const initialSurgeriesData: Surgery[] = [
+  { 
+    id: 's001', 
+    tipoIntervencion: 'cirugia', 
+    patientName: 'Carlos Ruiz', 
+    patientId: 'P001', 
+    edad: 30, 
+    ubicacionCama: 'Pabellón 1, Cama 101',
+    procedureType: 'Apendicectomía', 
+    diagnosticoPreOperatorio: 'Apendicitis Aguda', 
+    diagnosticoPostOperatorio: 'Apendicitis Aguda Resuelta',
+    surgeon: 'Dr. Pérez', 
+    date: todayDateString, 
+    time: '09:30', 
+    operatingRoom: 'Q1', 
+    status: 'Completed', 
+    entryTimestamp: new Date(new Date().setHours(new Date().getHours() - 3)).toISOString() // 3 hours ago today
+  },
+  { 
+    id: 's002', 
+    tipoIntervencion: 'cirugia', 
+    patientName: 'Laura Méndez', 
+    patientId: 'P002', 
+    edad: 45, 
+    ubicacionCama: 'Pabellón 1, Cama 102',
+    procedureType: 'Colecistectomía Laparoscópica', 
+    diagnosticoPreOperatorio: 'Colelitiasis Sintomática',
+    surgeon: 'Dra. González', 
+    date: todayDateString, 
+    time: '11:00', 
+    operatingRoom: 'Q2', 
+    status: 'Scheduled', 
+    entryTimestamp: new Date(new Date().setHours(new Date().getHours() - 5)).toISOString() // 5 hours ago today
+  },
+  { 
+    id: 's003', 
+    tipoIntervencion: 'procedimiento', 
+    patientName: 'Roberto Gómez', 
+    patientId: 'P003', 
+    edad: 55, 
+    ubicacionCama: 'Sala Proc., Cama 201',
+    procedureType: 'Endoscopía Digestiva Alta', 
+    diagnosticoPreOperatorio: 'Reflujo Gastroesofágico', 
+    diagnosticoPostOperatorio: 'Esofagitis Leve',
+    surgeon: 'Dr. Silva', 
+    date: yesterdayDateString, 
+    time: '14:00', 
+    operatingRoom: 'Endo1', 
+    status: 'Completed', 
+    entryTimestamp: new Date(new Date().setDate(new Date().getDate() -1)).toISOString() // Yesterday
+  },
+   { 
+    id: 's004', 
+    tipoIntervencion: 'cirugia', 
+    patientName: 'Ana Vidal', 
+    patientId: 'P004', 
+    edad: 68, 
+    ubicacionCama: 'Pabellón 2, Cama 104',
+    procedureType: 'Reemplazo de Cadera', 
+    diagnosticoPreOperatorio: 'Artrosis de Cadera Severa',
+    surgeon: 'Dr. Acosta', 
+    date: tomorrowDateString, 
+    time: '10:00', 
+    operatingRoom: 'Q1', 
+    status: 'Scheduled', 
+    entryTimestamp: new Date(new Date().setDate(new Date().getDate() -1)).toISOString() // Yesterday (scheduled for tomorrow)
+  },
+  { 
+    id: 's005', 
+    tipoIntervencion: 'cirugia', 
+    patientName: 'Elena Ríos', 
+    patientId: 'P005', 
+    edad: 50, 
+    ubicacionCama: 'Pabellón 2, Cama 105',
+    procedureType: 'Gastrectomía Parcial', 
+    diagnosticoPreOperatorio: 'Adenocarcinoma Gástrico', 
+    diagnosticoPostOperatorio: 'Adenocarcinoma Gástrico Resecado',
+    surgeon: 'Dr. Campos', 
+    date: todayDateString, 
+    time: '13:15', 
+    operatingRoom: 'Q3', 
+    status: 'Completed', 
+    entryTimestamp: new Date(new Date().setHours(new Date().getHours() - 1)).toISOString() // 1 hour ago today
+  },
+];
+
 const initialNonSurgicalPatientsData: NonSurgicalPatient[] = [
-  { id: 'ns001', name: 'Ana Torres', diagnosis: 'Neumonía', attending: 'Dra. Vega', entryTimestamp: new Date(new Date().setHours(new Date().getHours() - 2)).toISOString(), patientId: 'NS-P001', edad: 45, ubicacionCama: 'Sala Común 101' },
-  { id: 'ns002', name: 'Luis Rivas', diagnosis: 'Gastroenteritis', attending: 'Dr. Campos', entryTimestamp: new Date(new Date().setHours(new Date().getHours() - 26)).toISOString(), patientId: 'NS-P002', edad: 30, ubicacionCama: 'Sala Común 102' },
+  { 
+    id: 'ns001', 
+    name: 'Mario Luna', 
+    diagnosis: 'Deshidratación Severa', 
+    attending: 'Dra. Vega', 
+    entryTimestamp: new Date(new Date().setHours(new Date().getHours() - 2)).toISOString(), // 2 hours ago today
+    patientId: 'NS-P001', 
+    edad: 60, 
+    ubicacionCama: 'Sala Común 101',
+    tratamiento: 'Fluidoterapia IV, observación'
+  },
+  { 
+    id: 'ns002', 
+    name: 'Sofia Castro', 
+    diagnosis: 'Crisis Hipertensiva', 
+    attending: 'Dr. Torres', 
+    entryTimestamp: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString(), // Yesterday
+    patientId: 'NS-P002', 
+    edad: 72, 
+    ubicacionCama: 'Sala Común 102',
+    tratamiento: 'Labetalol IV, monitorización continua'
+  },
+   { 
+    id: 'ns003', 
+    name: 'Juan Herrera', 
+    diagnosis: 'Neumonía Adquirida en la Comunidad', 
+    attending: 'Dra. Solís', 
+    entryTimestamp: new Date(new Date().setHours(new Date().getHours() - 4)).toISOString(), // 4 hours ago today
+    patientId: 'NS-P003', 
+    edad: 52, 
+    ubicacionCama: 'Sala Aislamiento 205',
+    tratamiento: 'Ceftriaxona IV, O2 suplementario'
+  },
 ];
 
 const initialShiftNoveltiesData: ShiftNovelty[] = [
-  { id: 'nv001', time: '09:15', text: 'Se retrasó cirugía de P007 por falta de material.', reportedBy: 'Enf. Carla Soto', entryTimestamp: new Date().toISOString() },
-  { id: 'nv002', time: '13:00', text: 'Paciente P009 presentó reacción alérgica leve post-operatoria.', reportedBy: 'Dr. García', entryTimestamp: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString() },
+  { 
+    id: 'nv001', 
+    time: '09:15', 
+    text: 'Falla equipo Rayos X en pabellón 2. Se reprograman procedimientos que lo requieren.', 
+    reportedBy: 'Enf. Carla Soto', 
+    entryTimestamp: new Date(new Date().setHours(9,15)).toISOString() // Today 9:15 AM
+  },
+  { 
+    id: 'nv002', 
+    time: '13:00', 
+    text: 'Paciente P002 (Laura Méndez) refiere ser alérgica a Penicilina. Confirmado en ficha.', 
+    reportedBy: 'Dr. García', 
+    entryTimestamp: new Date(new Date().setHours(13,0)).toISOString() // Today 1:00 PM
+  },
+  {
+    id: 'nv003',
+    time: '15:30',
+    text: 'Disponibilidad de camas UCI limitada. Priorizar altas.',
+    reportedBy: 'Jefe de Turno',
+    entryTimestamp: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString() // Yesterday
+  }
 ];
+// --- End Descriptive Initial Dummy Data ---
+
 
 interface DraggableItemData {
   id: string;
@@ -123,6 +265,7 @@ const NonSurgicalPatientCard = ({ patient, onDragStart, onEdit }: NonSurgicalPat
       <p><strong>Diagnóstico:</strong> {patient.diagnosis}</p>
       <p><strong>Edad:</strong> {patient.edad || 'N/A'}</p>
       <p><strong>Ubicación:</strong> {patient.ubicacionCama || 'N/A'}</p>
+      <p><strong>Tratamiento:</strong> {patient.tratamiento || 'N/A'}</p>
     </CardContent>
     <CardFooter className="flex justify-end gap-2 pt-3">
        <Button variant="outline" size="sm" onClick={() => onEdit(patient.id, patient.entryTimestamp)}>
@@ -163,65 +306,90 @@ export default function DailyLog() {
   const [draggingOver, setDraggingOver] = useState<string | null>(null);
 
   useEffect(() => {
+    const currentDateString = format(new Date(), 'yyyy-MM-dd');
+
     // Load Surgeries
     try {
+      let allSurgeries: Surgery[];
       const storedSurgeriesJSON = localStorage.getItem(MOCK_SURGERIES_STORAGE_KEY);
       if (storedSurgeriesJSON) {
-        const allStoredSurgeries: Surgery[] = JSON.parse(storedSurgeriesJSON);
-        const todayFilteredSurgeries = allStoredSurgeries.filter(surgery =>
-            surgery.date && isToday(parseISO(surgery.date))
-        );
-        setTodaysSurgeries(todayFilteredSurgeries);
+        allSurgeries = JSON.parse(storedSurgeriesJSON);
+      } else {
+        allSurgeries = initialSurgeriesData; // Use the new descriptive initial data
+        localStorage.setItem(MOCK_SURGERIES_STORAGE_KEY, JSON.stringify(allSurgeries));
       }
+      setTodaysSurgeries(allSurgeries.filter(surgery => surgery.date === currentDateString));
     } catch (error) {
-      console.error("Error loading surgeries from localStorage:", error);
-      toast({ title: "Error de Carga", description: "No se pudieron cargar las cirugías.", variant: "destructive" });
+      console.error("Error loading/initializing surgeries from localStorage:", error);
+      // Fallback to ensure some data is shown if parsing fails or initial data is problematic
+      setTodaysSurgeries(initialSurgeriesData.filter(surgery => surgery.date === currentDateString));
+      toast({ title: "Error de Carga", description: "No se pudieron cargar las cirugías. Mostrando datos de ejemplo.", variant: "destructive" });
     }
 
     // Load Non-Surgical Patients
     try {
+      let allNonSurgical: NonSurgicalPatient[];
       const storedNonSurgicalJSON = localStorage.getItem(MOCK_NON_SURGICAL_STORAGE_KEY);
-      setNonSurgicalPatients(storedNonSurgicalJSON ? JSON.parse(storedNonSurgicalJSON).filter((p: NonSurgicalPatient) => p.entryTimestamp && isToday(parseISO(p.entryTimestamp))) : initialNonSurgicalPatientsData.filter(p => p.entryTimestamp && isToday(parseISO(p.entryTimestamp))));
+      if (storedNonSurgicalJSON) {
+        allNonSurgical = JSON.parse(storedNonSurgicalJSON);
+      } else {
+        allNonSurgical = initialNonSurgicalPatientsData;
+        localStorage.setItem(MOCK_NON_SURGICAL_STORAGE_KEY, JSON.stringify(allNonSurgical));
+      }
+      setNonSurgicalPatients(allNonSurgical.filter(p => p.entryTimestamp && isToday(parseISO(p.entryTimestamp))));
     } catch (error) {
-      console.error("Error loading non-surgical patients from localStorage:", error);
+      console.error("Error loading/initializing non-surgical patients from localStorage:", error);
       setNonSurgicalPatients(initialNonSurgicalPatientsData.filter(p => p.entryTimestamp && isToday(parseISO(p.entryTimestamp))));
-      toast({ title: "Error de Carga", description: "No se pudieron cargar los pacientes no quirúrgicos.", variant: "destructive" });
+      toast({ title: "Error de Carga", description: "No se pudieron cargar los pacientes no quirúrgicos. Mostrando datos de ejemplo.", variant: "destructive" });
     }
 
     // Load Shift Novelties
     try {
+      let allNovelties: ShiftNovelty[];
       const storedNoveltiesJSON = localStorage.getItem(MOCK_NOVELTIES_STORAGE_KEY);
-      setShiftNovelties(storedNoveltiesJSON ? JSON.parse(storedNoveltiesJSON).filter((n: ShiftNovelty) => n.entryTimestamp && isToday(parseISO(n.entryTimestamp))) : initialShiftNoveltiesData.filter(n => n.entryTimestamp && isToday(parseISO(n.entryTimestamp))));
+      if (storedNoveltiesJSON) {
+        allNovelties = JSON.parse(storedNoveltiesJSON);
+      } else {
+        allNovelties = initialShiftNoveltiesData;
+        localStorage.setItem(MOCK_NOVELTIES_STORAGE_KEY, JSON.stringify(allNovelties));
+      }
+      setShiftNovelties(allNovelties.filter(n => n.entryTimestamp && isToday(parseISO(n.entryTimestamp))));
     } catch (error) {
-      console.error("Error loading shift novelties from localStorage:", error);
+      console.error("Error loading/initializing shift novelties from localStorage:", error);
       setShiftNovelties(initialShiftNoveltiesData.filter(n => n.entryTimestamp && isToday(parseISO(n.entryTimestamp))));
-      toast({ title: "Error de Carga", description: "No se pudieron cargar las novedades.", variant: "destructive" });
+      toast({ title: "Error de Carga", description: "No se pudieron cargar las novedades. Mostrando datos de ejemplo.", variant: "destructive" });
     }
   }, [toast]);
 
   const saveAllDataToLocalStorage = (
     updatedTodaysSurgeries: Surgery[],
     updatedNonSurgicalPatients: NonSurgicalPatient[],
-    // updatedShiftNovelties: ShiftNovelty[] // Novelties not part of D&D yet
+    updatedShiftNovelties: ShiftNovelty[]
   ) => {
     try {
-      // Save Surgeries
-      let allSurgeries: Surgery[] = JSON.parse(localStorage.getItem(MOCK_SURGERIES_STORAGE_KEY) || '[]')
-                                     .filter((s: Surgery) => !(s.date && isToday(parseISO(s.date))));
-      allSurgeries.push(...updatedTodaysSurgeries);
-      localStorage.setItem(MOCK_SURGERIES_STORAGE_KEY, JSON.stringify(allSurgeries));
+      // Save Surgeries: merge updatedTodaysSurgeries with other-day surgeries from localStorage
+      const allStoredSurgeries: Surgery[] = JSON.parse(localStorage.getItem(MOCK_SURGERIES_STORAGE_KEY) || '[]')
+                                           .filter((s: Surgery) => s.date !== todayDateString); // Keep surgeries from other days
+      const newAllSurgeries = [...allStoredSurgeries, ...updatedTodaysSurgeries];
+      localStorage.setItem(MOCK_SURGERIES_STORAGE_KEY, JSON.stringify(newAllSurgeries));
       setTodaysSurgeries(updatedTodaysSurgeries);
 
-      // Save Non-Surgical Patients
-      let allNonSurgical: NonSurgicalPatient[] = JSON.parse(localStorage.getItem(MOCK_NON_SURGICAL_STORAGE_KEY) || '[]')
-                                               .filter((p: NonSurgicalPatient) => !(p.entryTimestamp && isToday(parseISO(p.entryTimestamp))));
-      allNonSurgical.push(...updatedNonSurgicalPatients);
-      localStorage.setItem(MOCK_NON_SURGICAL_STORAGE_KEY, JSON.stringify(allNonSurgical));
-      setNonSurgicalPatients(updatedNonSurgicalPatients);
 
-      // Placeholder for novelties if they become draggable/modifiable
-      // localStorage.setItem(MOCK_NOVELTIES_STORAGE_KEY, JSON.stringify(updatedShiftNovelties));
-      // setShiftNovelties(updatedShiftNovelties);
+      // Save Non-Surgical Patients: merge updatedNonSurgicalPatients with other-day patients
+      const allStoredNonSurgical: NonSurgicalPatient[] = JSON.parse(localStorage.getItem(MOCK_NON_SURGICAL_STORAGE_KEY) || '[]')
+                                                          .filter((p: NonSurgicalPatient) => !(p.entryTimestamp && isToday(parseISO(p.entryTimestamp))));
+      const newAllNonSurgical = [...allStoredNonSurgical, ...updatedNonSurgicalPatients];
+      localStorage.setItem(MOCK_NON_SURGICAL_STORAGE_KEY, JSON.stringify(newAllNonSurgical));
+      setNonSurgicalPatients(updatedNonSurgicalPatients);
+      
+
+      // Save Shift Novelties: merge updatedShiftNovelties with other-day novelties
+      const allStoredNovelties: ShiftNovelty[] = JSON.parse(localStorage.getItem(MOCK_NOVELTIES_STORAGE_KEY) || '[]')
+                                                 .filter((n: ShiftNovelty) => !(n.entryTimestamp && isToday(parseISO(n.entryTimestamp))));
+      const newAllNovelties = [...allStoredNovelties, ...updatedShiftNovelties];
+      localStorage.setItem(MOCK_NOVELTIES_STORAGE_KEY, JSON.stringify(newAllNovelties));
+      setShiftNovelties(updatedShiftNovelties);
+
 
     } catch (error) {
       console.error("Error saving data to localStorage:", error);
@@ -241,6 +409,7 @@ export default function DailyLog() {
       return false;
     }
     const hoursDifference = differenceInHours(new Date(), entryDate);
+    console.log(`isEditable: Entry: ${entryTimestamp}, Now: ${new Date().toISOString()}, Diff (hours): ${hoursDifference}`);
     return hoursDifference <= 24;
   };
 
@@ -291,81 +460,84 @@ export default function DailyLog() {
 
     let newTodaysSurgeries = [...todaysSurgeries];
     let newNonSurgicalPatients = [...nonSurgicalPatients];
+    // let newShiftNovelties = [...shiftNovelties]; // Novelties not part of D&D yet
+
     const newEntryTimestamp = new Date().toISOString();
     let updateMade = false;
     let toastMessage = "";
 
-    // --- Logic for moving items ---
+    // From PENDIENTES (Surgery)
+    if (originalSectionId === 'pendientes' && (rawItemData as Surgery).tipoIntervencion) {
+        const surgery = rawItemData as Surgery;
+        if (targetSectionId === 'operados') { // Pendientes -> Operados
+            newTodaysSurgeries = newTodaysSurgeries.map(s => s.id === draggedItemId ? { ...s, status: 'Completed', entryTimestamp: newEntryTimestamp } : s);
+            toastMessage = `Cirugía de ${surgery.patientName} movida a Pacientes Operados.`;
+            updateMade = true;
+        } else if (targetSectionId === 'no-quirurgicos') { // Pendientes -> No Quirúrgicos
+            newTodaysSurgeries = newTodaysSurgeries.filter(s => s.id !== draggedItemId);
+            const newNonSurgical: NonSurgicalPatient = {
+            id: `ns-${surgery.id}`, 
+            name: surgery.patientName,
+            patientId: surgery.patientId,
+            edad: surgery.edad,
+            ubicacionCama: surgery.ubicacionCama,
+            diagnosis: surgery.diagnosticoPreOperatorio || 'Diagnóstico no especificado',
+            attending: surgery.surgeon || 'Médico no especificado',
+            entryTimestamp: newEntryTimestamp,
+            };
+            newNonSurgicalPatients.push(newNonSurgical);
+            toastMessage = `Paciente ${surgery.patientName} movido de Pendientes a No Quirúrgicos.`;
+            updateMade = true;
+        }
+    }
+    // From OPERADOS (Surgery)
+    else if (originalSectionId === 'operados' && (rawItemData as Surgery).tipoIntervencion) {
+        if (targetSectionId === 'pendientes' || targetSectionId === 'no-quirurgicos') {
+            toast({ title: "Acción no permitida", description: "Un paciente operado no puede volver a Pendientes o No Quirúrgicos mediante arrastre.", variant: "destructive" });
+            return; 
+        }
+    }
+    // From NO QUIRURGICOS (NonSurgicalPatient)
+    else if (originalSectionId === 'no-quirurgicos' && !(rawItemData as Surgery).tipoIntervencion) {
+        const nonSurgical = rawItemData as NonSurgicalPatient;
+        if (targetSectionId === 'pendientes' || targetSectionId === 'operados') {
+            newNonSurgicalPatients = newNonSurgicalPatients.filter(p => p.id !== draggedItemId);
+            const newSurgery: Surgery = {
+                id: `s-${nonSurgical.id}`, 
+                patientName: nonSurgical.name,
+                patientId: nonSurgical.patientId,
+                edad: nonSurgical.edad,
+                ubicacionCama: nonSurgical.ubicacionCama,
+                procedureType: 'Procedimiento por traslado de No Quirúrgico',
+                tipoIntervencion: 'procedimiento', 
+                status: targetSectionId === 'pendientes' ? 'Scheduled' : 'Completed',
+                date: format(new Date(), 'yyyy-MM-dd'),
+                time: format(new Date(), 'HH:mm'),
+                diagnosticoPreOperatorio: nonSurgical.diagnosis,
+                entryTimestamp: newEntryTimestamp,
+                surgeon: nonSurgical.attending,
+            };
+            newTodaysSurgeries.push(newSurgery);
+            toastMessage = `Paciente ${nonSurgical.name} movido de No Quirúrgicos a ${targetSectionId === 'pendientes' ? 'Pendientes por Operar' : 'Pacientes Operados'}.`;
+            updateMade = true;
+        }
+    }
 
-    // From PENDIENTES
-    if (originalSectionId === 'pendientes') {
-      const surgery = rawItemData as Surgery;
-      if (targetSectionId === 'operados') { // Pendientes -> Operados
-        newTodaysSurgeries = newTodaysSurgeries.map(s => s.id === draggedItemId ? { ...s, status: 'Completed', entryTimestamp: newEntryTimestamp } : s);
-        toastMessage = `Cirugía ${surgery.patientName} movida a Pacientes Operados.`;
-        updateMade = true;
-      } else if (targetSectionId === 'no-quirurgicos') { // Pendientes -> No Quirúrgicos
-        newTodaysSurgeries = newTodaysSurgeries.filter(s => s.id !== draggedItemId);
-        const newNonSurgical: NonSurgicalPatient = {
-          id: surgery.id, // Consider if ID needs to be unique across types or re-generated
-          name: surgery.patientName,
-          patientId: surgery.patientId,
-          edad: surgery.edad,
-          ubicacionCama: surgery.ubicacionCama,
-          diagnosis: surgery.diagnosticoPreOperatorio || 'Diagnóstico no especificado',
-          attending: surgery.surgeon || 'Médico no especificado',
-          entryTimestamp: newEntryTimestamp,
-        };
-        newNonSurgicalPatients.push(newNonSurgical);
-        toastMessage = `Paciente ${surgery.patientName} movido de Pendientes a No Quirúrgicos.`;
-        updateMade = true;
-      }
-    }
-    // From OPERADOS
-    else if (originalSectionId === 'operados') {
-      if (targetSectionId === 'pendientes' || targetSectionId === 'no-quirurgicos') {
-        toast({ title: "Acción no permitida", description: "Un paciente operado no puede volver a Pendientes o No Quirúrgicos mediante arrastre.", variant: "destructive" });
-        return; // Block action
-      }
-    }
-    // From NO QUIRURGICOS
-    else if (originalSectionId === 'no-quirurgicos') {
-      const nonSurgical = rawItemData as NonSurgicalPatient;
-      if (targetSectionId === 'pendientes' || targetSectionId === 'operados') {
-        newNonSurgicalPatients = newNonSurgicalPatients.filter(p => p.id !== draggedItemId);
-        const newSurgery: Surgery = {
-          id: nonSurgical.id, // Consider ID uniqueness
-          patientName: nonSurgical.name,
-          patientId: nonSurgical.patientId,
-          edad: nonSurgical.edad,
-          ubicacionCama: nonSurgical.ubicacionCama,
-          procedureType: 'Procedimiento por traslado', // Default
-          tipoIntervencion: 'procedimiento', // Default
-          status: targetSectionId === 'pendientes' ? 'Scheduled' : 'Completed',
-          date: new Date().toISOString().split('T')[0],
-          time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit'}),
-          diagnosticoPreOperatorio: nonSurgical.diagnosis,
-          entryTimestamp: newEntryTimestamp,
-        };
-        newTodaysSurgeries.push(newSurgery);
-        toastMessage = `Paciente ${nonSurgical.name} movido de No Quirúrgicos a ${targetSectionId === 'pendientes' ? 'Pendientes por Operar' : 'Pacientes Operados'}.`;
-        updateMade = true;
-      }
-    }
 
     if (updateMade) {
-      saveAllDataToLocalStorage(newTodaysSurgeries, newNonSurgicalPatients);
+      saveAllDataToLocalStorage(newTodaysSurgeries, newNonSurgicalPatients, shiftNovelties); // Pass novelties even if not changed by D&D
       toast({ title: "Actualización Exitosa", description: toastMessage });
-    } else {
-       toast({ title: "Movimiento no válido", description: "Esta transición no está permitida o no se realizó ninguna acción.", variant: "default" });
+    } else if (originalSectionId !== targetSectionId) { // Only show if it was a valid attempt to move to a *different* section
+       toast({ title: "Movimiento no válido", description: "Esta transición no está permitida o no se pudo identificar el tipo de ítem.", variant: "default" });
     }
   };
 
 
   const scheduledSurgeries = todaysSurgeries.filter(s => s.status === 'Scheduled');
   const completedSurgeries = todaysSurgeries.filter(s => s.status === 'Completed');
-  const todayNonSurgicalPatients = nonSurgicalPatients; // Already filtered by day on load
-  const todayShiftNovelties = shiftNovelties; // Already filtered by day on load
+  // todayNonSurgicalPatients and todayShiftNovelties are already filtered by day on load/init
+  const todayNonSurgicalPatients = nonSurgicalPatients; 
+  const todayShiftNovelties = shiftNovelties; 
 
   const accordionSections = [
     {
@@ -373,7 +545,7 @@ export default function DailyLog() {
       title: 'Pacientes Operados',
       icon: CheckCircle,
       data: completedSurgeries,
-      renderItem: (item: Surgery) => <PatientCard key={item.id} surgery={item} onDragStart={handleDragStart} onEdit={(id, ts) => handleEdit(id, "la cirugía", ts)} />,
+      renderItem: (item: Surgery) => <PatientCard key={item.id} surgery={item} onDragStart={handleDragStart} onEdit={(id, ts) => handleEdit(id, "la cirugía completada", ts)} />,
       emptyText: "No hay pacientes registrados como operados hoy.",
       droppable: true,
       navigationPath: '/cirugias/registrar/procedimiento'
@@ -405,7 +577,7 @@ export default function DailyLog() {
       data: todayShiftNovelties,
       renderItem: (item: ShiftNovelty) => <NoveltyCard key={item.id} novelty={item} onEdit={(id, ts) => handleEdit(id, "la novedad", ts)} />,
       emptyText: "No hay novedades registradas para el turno de hoy.",
-      droppable: false, // Novedades no son droppables en este contexto
+      droppable: false, 
       navigationPath: '/cirugias/registrar/novedades-turno'
     },
   ];
@@ -429,7 +601,7 @@ export default function DailyLog() {
 
 
   return (
-    <Accordion type="multiple" className="w-full space-y-4" defaultValue={['pendientes', 'operados', 'no-quirurgicos']}>
+    <Accordion type="multiple" className="w-full space-y-4" defaultValue={['pendientes', 'operados', 'no-quirurgicos', 'novedades']}>
       {accordionSections.map((section) => (
         <AccordionItem value={section.id} key={section.id} className="border rounded-lg shadow-md bg-card overflow-hidden">
           <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50 transition-colors group">
@@ -474,3 +646,4 @@ export default function DailyLog() {
     </Accordion>
   );
 }
+
