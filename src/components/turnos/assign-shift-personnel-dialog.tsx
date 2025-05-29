@@ -61,12 +61,15 @@ export default function AssignShiftPersonnelDialog({
 
   useEffect(() => {
     if (isOpen) {
-      // Create a deep copy of currentAssignments to avoid direct state mutation issues
+      // Initialize/reset personnel state only when the dialog opens for a new shift context (new date)
+      // This prevents local changes (like removals) from being overridden by prop changes
+      // if the parent re-renders for other reasons while the dialog is open for the same shift.
       setPersonnel(JSON.parse(JSON.stringify(currentAssignments)));
       setSelectedSurgeonId('');
       setSelectedRole('');
+      console.log('Dialog opened/reset for date:', selectedDate, 'with assignments:', currentAssignments);
     }
-  }, [isOpen, currentAssignments]);
+  }, [isOpen, selectedDate]); // Depend on isOpen and selectedDate to define new shift context
 
   const handleAddPersonnel = () => {
     if (!selectedSurgeonId || !selectedRole) {
@@ -89,7 +92,13 @@ export default function AssignShiftPersonnelDialog({
   };
 
   const handleRemovePersonnel = (surgeonIdToRemove: string) => {
-    setPersonnel(prev => prev.filter(p => p.surgeonId !== surgeonIdToRemove));
+    console.log('Attempting to remove:', surgeonIdToRemove);
+    console.log('Current personnel before removal:', personnel);
+    setPersonnel(prev => {
+      const updated = prev.filter(p => p.surgeonId !== surgeonIdToRemove);
+      console.log('Personnel after removal:', updated);
+      return updated;
+    });
   };
 
   const handleSaveChanges = () => {
@@ -102,7 +111,7 @@ export default function AssignShiftPersonnelDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg md:max-w-2xl max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-xl md:max-w-3xl max-h-[90vh] flex flex-col"> {/* Increased width */}
         <DialogHeader>
           <DialogTitle className="text-2xl">
             Gestionar Personal del Turno - <span className="text-primary">{shiftDetails?.shiftLabel || 'Turno'}</span>
@@ -119,7 +128,7 @@ export default function AssignShiftPersonnelDialog({
             <div className="space-y-2">
               <Label htmlFor="select-surgeon">Cirujano</Label>
               <Select value={selectedSurgeonId} onValueChange={setSelectedSurgeonId}>
-                <SelectTrigger id="select-surgeon">
+                <SelectTrigger id="select-surgeon" className="w-full">
                   <SelectValue placeholder="Seleccionar cirujano..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -139,7 +148,7 @@ export default function AssignShiftPersonnelDialog({
             <div className="space-y-2">
               <Label htmlFor="select-role">Rol</Label>
               <Select value={selectedRole} onValueChange={(value) => setSelectedRole(value as SurgeonRole | '')}>
-                <SelectTrigger id="select-role">
+                <SelectTrigger id="select-role" className="w-full">
                   <SelectValue placeholder="Seleccionar rol..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -165,7 +174,7 @@ export default function AssignShiftPersonnelDialog({
               <ScrollArea className="h-[250px] md:h-[300px] pr-1">
                 <ul className="space-y-2">
                   {personnel.map((p) => (
-                    <li key={p.surgeonId} className="flex items-center justify-between p-3 border rounded-md shadow-sm bg-card hover:bg-muted/50">
+                    <li key={p.surgeonId} className="flex items-center justify-between p-3 border rounded-md shadow-sm bg-card hover:bg-muted/50 w-full">
                       <div>
                         <p className="font-medium text-foreground">{p.surgeonName}</p>
                         <p className="text-xs text-muted-foreground">
