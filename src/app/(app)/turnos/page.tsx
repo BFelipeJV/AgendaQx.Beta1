@@ -46,13 +46,15 @@ export default function ShiftCalendarPage() {
       }
     } catch (error) {
       console.error("Error loading users from localStorage:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los usuarios registrados.",
-        variant: "destructive",
-      });
+      setTimeout(() => {
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los usuarios registrados.",
+          variant: "destructive",
+        });
+      }, 0);
     }
-  }, [toast]);
+  }, []); // Removed toast from dependency array
 
   const handleAssignSurgeonToDate = (surgeon: StoredUser, date: Date | undefined) => {
     if (!date) {
