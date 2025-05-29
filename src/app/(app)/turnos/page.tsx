@@ -67,7 +67,7 @@ export default function ShiftCalendarPage() {
       }
     } catch (error) {
       console.error("Error loading users from localStorage:", error);
-      setTimeout(() => { // setTimeout to ensure toast is called outside of render cycle if error on initial load
+      setTimeout(() => { 
         toast({
           title: "Error",
           description: "No se pudieron cargar los usuarios registrados.",
@@ -81,7 +81,7 @@ export default function ShiftCalendarPage() {
         if (storedShiftAssignments) {
             const parsedAssignments: ShiftAssignment[] = JSON.parse(storedShiftAssignments).map((sa: any) => ({
                 ...sa,
-                date: parseISO(sa.date), // Ensure date is parsed back to Date object
+                date: parseISO(sa.date), 
             }));
             setShiftAssignments(parsedAssignments.sort((a, b) => a.date.getTime() - b.date.getTime()));
         }
@@ -140,35 +140,53 @@ export default function ShiftCalendarPage() {
 
     toast({ title: "Turno Actualizado", description: `Personal del turno para ${format(updatedAssignment.date, 'PPP', { locale: es})} guardado.` });
     setIsAssignDialogOpen(false);
-    setEditingShiftAssignment(undefined); // Important to clear after save/close
+    setEditingShiftAssignment(undefined); 
   };
 
   const handlePrepareDeleteShift = () => {
+    console.log("[DEBUG] handlePrepareDeleteShift called. Selected Date:", selectedCalendarDate);
     if (!selectedCalendarDate) {
       toast({ title: "Error", description: "Por favor, seleccione una fecha primero.", variant: "destructive" });
       return;
     }
     const assignmentToDelete = shiftAssignments.find(sa => isSameDay(sa.date, selectedCalendarDate));
+    console.log("[DEBUG] Found assignment to delete in handlePrepareDeleteShift:", assignmentToDelete);
     if (assignmentToDelete && assignmentToDelete.assignedPersonnel.length > 0) {
       setShiftToDelete(assignmentToDelete);
       setIsDeleteDialogOpen(true);
+      console.log("[DEBUG] Set shiftToDelete and opening delete dialog.");
     } else if (assignmentToDelete) {
        toast({ title: "Información", description: "Este turno no tiene personal asignado para eliminar.", variant: "default" });
+       console.log("[DEBUG] Shift has no personnel, not deleting.");
     } else {
       toast({ title: "Información", description: "No hay un turno asignado específico para esta fecha.", variant: "default" });
+      console.log("[DEBUG] No specific assignment for this date.");
     }
   };
 
   const handleConfirmDeleteShift = () => {
-    if (!shiftToDelete) return;
+    console.log("[DEBUG] handleConfirmDeleteShift called. shiftToDelete:", shiftToDelete);
+    if (!shiftToDelete) {
+      console.error("[DEBUG] shiftToDelete is null, cannot delete.");
+      return;
+    }
 
     setShiftAssignments(prevAssignments => {
+      console.log("[DEBUG] Current assignments before delete:", prevAssignments);
       const newAssignments = prevAssignments.filter(sa => sa.id !== shiftToDelete.id);
+      console.log("[DEBUG] Assignments after filter (should be one less):", newAssignments);
+      console.log(`[DEBUG] Filtering based on id: ${shiftToDelete.id}`);
+      
+      if (newAssignments.length === prevAssignments.length && prevAssignments.some(sa => sa.id === shiftToDelete.id)) {
+        console.warn("[DEBUG] Filter did not remove any assignments. Check ID matching or object references.");
+      }
+
       try {
         localStorage.setItem(SHIFT_ASSIGNMENTS_STORAGE_KEY, JSON.stringify(newAssignments.map(sa => ({...sa, date: sa.date.toISOString()}))));
         toast({ title: "Turno Eliminado", description: `La asignación de personal para ${format(shiftToDelete.date, 'PPP', { locale: es})} ha sido eliminada.` });
+        console.log("[DEBUG] Successfully updated localStorage and toasted.");
       } catch (error) {
-        console.error("Error deleting shift assignment from localStorage:", error);
+        console.error("[DEBUG] Error deleting shift assignment from localStorage:", error);
         toast({ title: "Error de Eliminación", description: "No se pudo eliminar la asignación del turno de localStorage.", variant: "destructive"});
       }
       return newAssignments;
@@ -176,21 +194,20 @@ export default function ShiftCalendarPage() {
     
     setIsDeleteDialogOpen(false);
     setShiftToDelete(null);
-    // If the deleted shift was the one being "edited" or focused, clear that state
-    if (editingShiftAssignment && editingShiftAssignment.id === shiftToDelete.id) {
+    console.log("[DEBUG] Closed delete dialog and reset shiftToDelete.");
+
+    if (editingShiftAssignment && shiftToDelete && editingShiftAssignment.id === shiftToDelete.id) {
         setEditingShiftAssignment(undefined);
+        console.log("[DEBUG] Cleared editingShiftAssignment.");
     }
   };
 
-  // Update editingShiftAssignment when selectedCalendarDate changes
   useEffect(() => {
     if (selectedCalendarDate) {
       const assignmentForDate = shiftAssignments.find(sa => isSameDay(sa.date, selectedCalendarDate));
       if (assignmentForDate) {
         setEditingShiftAssignment(assignmentForDate);
       } else {
-        // If no specific assignment exists, we can still prepare a template for the dialog
-        // but `editingShiftAssignment` should be undefined for delete button logic
         setEditingShiftAssignment(undefined); 
       }
     } else {
@@ -255,13 +272,13 @@ export default function ShiftCalendarPage() {
             setIsAssignDialogOpen(open);
             if (!open) setEditingShiftAssignment(undefined); 
           }}
-          selectedDate={selectedCalendarDate} // Pass the actual selectedDate
+          selectedDate={selectedCalendarDate} 
           shiftDetails={{ 
-             shiftLabel: editingShiftAssignment?.shiftLabel || getShiftTemplateForDate(selectedCalendarDate).shiftLabel, // Fallback if editingShiftAssignment is somehow not set
+             shiftLabel: editingShiftAssignment?.shiftLabel || getShiftTemplateForDate(selectedCalendarDate).shiftLabel, 
              bgColorClass: editingShiftAssignment?.bgColorClass || getShiftTemplateForDate(selectedCalendarDate).bgColorClass,
              borderColorClass: editingShiftAssignment?.borderColorClass || getShiftTemplateForDate(selectedCalendarDate).borderColorClass,
           }}
-          currentAssignments={editingShiftAssignment?.assignedPersonnel || []} // Fallback to empty array
+          currentAssignments={editingShiftAssignment?.assignedPersonnel || []} 
           registeredSurgeons={registeredSurgeons}
           onSave={handleSaveShiftPersonnel}
         />
@@ -285,5 +302,3 @@ export default function ShiftCalendarPage() {
     </div>
   );
 }
-
-    
