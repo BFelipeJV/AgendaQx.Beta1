@@ -60,16 +60,17 @@ export default function AssignShiftPersonnelDialog({
   const [selectedRole, setSelectedRole] = useState<SurgeonRole | ''>('');
 
   useEffect(() => {
-    if (isOpen) {
-      // Initialize/reset personnel state only when the dialog opens for a new shift context (new date)
-      // This prevents local changes (like removals) from being overridden by prop changes
-      // if the parent re-renders for other reasons while the dialog is open for the same shift.
+    // This effect initializes or resets the local 'personnel' state
+    // when the dialog opens OR when the context (selectedDate) changes.
+    // It uses a deep copy of currentAssignments to prevent direct mutation
+    // and to ensure local state is distinct from parent state until saved.
+    if (isOpen && selectedDate) {
+      console.log('Dialog Effect: Initializing/Resetting personnel for date:', selectedDate.toISOString(), 'with currentAssignments:', currentAssignments);
       setPersonnel(JSON.parse(JSON.stringify(currentAssignments)));
       setSelectedSurgeonId('');
       setSelectedRole('');
-      console.log('Dialog opened/reset for date:', selectedDate, 'with assignments:', currentAssignments);
     }
-  }, [isOpen, selectedDate]); // Depend on isOpen and selectedDate to define new shift context
+  }, [isOpen, selectedDate, currentAssignments]); // currentAssignments is added here to re-initialize if parent data changes for the same open dialog and date.
 
   const handleAddPersonnel = () => {
     if (!selectedSurgeonId || !selectedRole) {
@@ -87,21 +88,22 @@ export default function AssignShiftPersonnelDialog({
     }
 
     setPersonnel(prev => [...prev, { surgeonId: surgeon.email, surgeonName: surgeon.nombreCompleto, role: selectedRole as SurgeonRole }]);
-    setSelectedSurgeonId(''); // Reset select for next addition
-    setSelectedRole('');     // Reset select for next addition
+    setSelectedSurgeonId(''); 
+    setSelectedRole('');     
   };
 
   const handleRemovePersonnel = (surgeonIdToRemove: string) => {
-    console.log('Attempting to remove:', surgeonIdToRemove);
-    console.log('Current personnel before removal:', personnel);
-    setPersonnel(prev => {
-      const updated = prev.filter(p => p.surgeonId !== surgeonIdToRemove);
-      console.log('Personnel after removal:', updated);
-      return updated;
+    console.log('handleRemovePersonnel called for surgeonId:', surgeonIdToRemove);
+    console.log('Personnel state BEFORE removal:', personnel);
+    setPersonnel(prevPersonnel => {
+      const updatedPersonnel = prevPersonnel.filter(p => p.surgeonId !== surgeonIdToRemove);
+      console.log('Personnel state AFTER removal (updatedPersonnel):', updatedPersonnel);
+      return updatedPersonnel;
     });
   };
 
   const handleSaveChanges = () => {
+    console.log('Saving changes with personnel:', personnel);
     onSave(personnel);
   };
 
@@ -111,18 +113,17 @@ export default function AssignShiftPersonnelDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl md:max-w-3xl max-h-[90vh] flex flex-col"> {/* Increased width */}
+      <DialogContent className="sm:max-w-xl md:max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-2xl">
             Gestionar Personal del Turno - <span className="text-primary">{shiftDetails?.shiftLabel || 'Turno'}</span>
           </DialogTitle>
           <DialogDescription>
-            Fecha: {format(selectedDate, 'PPPP', { locale: es })}. Asigne o remueva personal.
+            Fecha: {selectedDate ? format(selectedDate, 'PPPP', { locale: es }) : 'N/A'}. Asigne o remueva personal.
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 py-4 flex-grow overflow-y-auto">
-          {/* Section to Add Personnel */}
           <div className="space-y-4 md:border-r md:pr-6">
             <h3 className="text-lg font-medium text-foreground mb-2">Añadir Personal</h3>
             <div className="space-y-2">
@@ -165,7 +166,6 @@ export default function AssignShiftPersonnelDialog({
             </Button>
           </div>
 
-          {/* Section to View/Remove Assigned Personnel */}
           <div className="space-y-3">
              <h3 className="text-lg font-medium text-foreground mb-2">Personal Asignado ({personnel.length})</h3>
             {personnel.length === 0 ? (
@@ -181,7 +181,16 @@ export default function AssignShiftPersonnelDialog({
                           {surgeonRoles.find(r => r.value === p.role)?.label || p.role}
                         </p>
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => handleRemovePersonnel(p.surgeonId)} className="text-destructive hover:text-destructive/80 h-8 w-8">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => {
+                          console.log(`Delete button clicked for surgeonId: ${p.surgeonId}`);
+                          handleRemovePersonnel(p.surgeonId);
+                        }} 
+                        className="text-destructive hover:text-destructive/80 h-8 w-8"
+                        aria-label={`Remover a ${p.surgeonName}`}
+                      >
                         <Trash2 className="h-4 w-4" />
                         <span className="sr-only">Remover</span>
                       </Button>
@@ -203,4 +212,3 @@ export default function AssignShiftPersonnelDialog({
     </Dialog>
   );
 }
-
