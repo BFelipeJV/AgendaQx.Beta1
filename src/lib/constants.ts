@@ -15,15 +15,9 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
     description: 'Seleccionar tipo de atención a registrar.',
   },
   {
-    title: 'Agenda Quirúrgica',
-    href: '/agenda',
-    iconName: 'CalendarDays',
-    description: 'Ver y gestionar las próximas cirugías.',
-  },
-  {
     title: 'Registro Diario',
     href: '/agenda/hoy',
-    iconName: 'ListChecks', // Changed from BookOpenCheck to ListChecks as per dashboard
+    iconName: 'ListChecks', 
     description: 'Procedimientos programados para hoy.',
   },
   {
@@ -31,6 +25,12 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
     href: '/turnos',
     iconName: 'CalendarClock',
     description: 'Gestionar y visualizar los turnos de los cirujanos.',
+  },
+  {
+    title: 'Registro Histórico',
+    href: '/historial',
+    iconName: 'History',
+    description: 'Consultar y descargar registros pasados.',
   },
   {
     title: 'Registrar Usuarios',

@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, CalendarDays, ListChecks, UserPlus, CalendarClock } from 'lucide-react';
+import { ArrowRight, ListChecks, UserPlus, CalendarClock, History, ListPlus as ListPlusIcon } from 'lucide-react'; // Renamed ListPlus to avoid conflict
 import { APP_NAME } from '@/lib/constants';
 
 const dashboardFeatures = [
@@ -10,18 +10,11 @@ const dashboardFeatures = [
     title: 'Registro de Atenciones',
     description: 'Añade un nuevo registro de atención seleccionando el tipo.',
     href: '/cirugias/registrar',
-    icon: UserPlus,
+    icon: ListPlusIcon, // Use the renamed import
     cta: 'Registrar Atención',
   },
   {
-    title: 'Ver Agenda Quirúrgica',
-    description: 'Accede al calendario para ver y gestionar las cirugías programadas.',
-    href: '/agenda',
-    icon: CalendarDays,
-    cta: 'Ver Agenda',
-  },
-  {
-    title: 'Registro Quirúrgico de Hoy',
+    title: 'Registro Diario',
     description: 'Consulta la lista detallada de cirugías y procedimientos para hoy.',
     href: '/agenda/hoy',
     icon: ListChecks,
@@ -33,6 +26,13 @@ const dashboardFeatures = [
     href: '/turnos',
     icon: CalendarClock,
     cta: 'Ver Calendario de Turnos',
+  },
+  {
+    title: 'Registro Histórico',
+    description: 'Consulta y descarga el historial de atenciones pasadas.',
+    href: '/historial',
+    icon: History,
+    cta: 'Ver Historial',
   },
 ];
 
