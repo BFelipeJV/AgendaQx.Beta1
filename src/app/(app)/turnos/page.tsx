@@ -2,40 +2,51 @@
 'use client';
 
 import ShiftCalendarView from '@/components/turnos/shift-calendar-view';
+import AssignShiftPersonnelDialog from '@/components/turnos/assign-shift-personnel-dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CalendarClock, PlusCircle, Users, AlertTriangle } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import type { ShiftAssignment, StoredUser } from '@/lib/types';
+import { CalendarClock, Users, Edit } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import type { ShiftAssignment, StoredUser, AssignedPersonnel, SurgeonRole } from '@/lib/types';
 import { MOCK_USERS_STORAGE_KEY } from '@/lib/constants';
-import { isSameDay } from 'date-fns';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { isSameDay, getDay, format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { es } from 'date-fns/locale'; // Import es locale for formatting
 
-// Initial shift data (can be moved or fetched eventually)
-const currentYear = new Date().getFullYear();
-const initialShiftData: ShiftAssignment[] = [
-  { id: 'shift1', date: new Date(currentYear, 4, 1), shiftLabel: 'Turno Jueves', surgeons: [], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift2', date: new Date(currentYear, 4, 2), shiftLabel: 'Turno Lunes', surgeons: [], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
-  { id: 'shift3', date: new Date(currentYear, 4, 3), shiftLabel: 'Volante 1', surgeons: [], bgColorClass: 'bg-green-100 text-green-800', borderColorClass: 'border-green-300' },
-  { id: 'shift4', date: new Date(currentYear, 4, 4), shiftLabel: 'Volante 2', surgeons: [], bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' },
-  { id: 'shift5', date: new Date(currentYear, 4, 5), shiftLabel: 'Turno Lunes', surgeons: [], bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' },
-  // Add more shifts as needed to match the original dummy data structure
-];
+// Templates for shift types based on day of the week or specific labels
+// Day mapping: 0 for Sunday, 1 for Monday, ..., 6 for Saturday
+const shiftTemplates: Record<string, Omit<ShiftAssignment, 'id' | 'date' | 'assignedPersonnel'>> = {
+  '1': { shiftLabel: 'Turno Lunes', bgColorClass: 'bg-sky-100 text-sky-800', borderColorClass: 'border-sky-300' }, // Monday
+  '2': { shiftLabel: 'Turno Martes', bgColorClass: 'bg-teal-100 text-teal-800', borderColorClass: 'border-teal-300' }, // Tuesday
+  '3': { shiftLabel: 'Turno Miércoles', bgColorClass: 'bg-green-100 text-green-800', borderColorClass: 'border-green-300' }, // Wednesday
+  '4': { shiftLabel: 'Turno Jueves', bgColorClass: 'bg-amber-100 text-amber-800', borderColorClass: 'border-amber-300' }, // Thursday
+  '5': { shiftLabel: 'Turno Viernes', bgColorClass: 'bg-red-100 text-red-800', borderColorClass: 'border-red-300' }, // Friday
+  'Volante 1': { shiftLabel: 'Volante 1', bgColorClass: 'bg-purple-100 text-purple-800', borderColorClass: 'border-purple-300' },
+  'Volante 2': { shiftLabel: 'Volante 2', bgColorClass: 'bg-pink-100 text-pink-800', borderColorClass: 'border-pink-300' },
+};
 
+// Function to get a shift template based on a date
+const getShiftTemplateForDate = (date: Date): Omit<ShiftAssignment, 'id' | 'date' | 'assignedPersonnel'> => {
+  const dayOfWeek = getDay(date); // 0 (Sunday) to 6 (Saturday)
+  if (dayOfWeek === 6) return shiftTemplates['Volante 1']; // Saturday
+  if (dayOfWeek === 0) return shiftTemplates['Volante 2']; // Sunday
+  return shiftTemplates[dayOfWeek.toString()] || { 
+    shiftLabel: 'Turno General', // Fallback for unmapped days
+    bgColorClass: 'bg-gray-100 text-gray-800',
+    borderColorClass: 'border-gray-300',
+  };
+};
+
+const SHIFT_ASSIGNMENTS_STORAGE_KEY = 'mockShiftAssignments';
 
 export default function ShiftCalendarPage() {
   const { toast } = useToast();
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | undefined>();
   const [registeredSurgeons, setRegisteredSurgeons] = useState<StoredUser[]>([]);
-  const [shiftAssignments, setShiftAssignments] = useState<ShiftAssignment[]>(initialShiftData);
+  const [shiftAssignments, setShiftAssignments] = useState<ShiftAssignment[]>([]);
+
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [editingShiftAssignment, setEditingShiftAssignment] = useState<ShiftAssignment | undefined>(undefined);
 
   useEffect(() => {
     try {
@@ -54,48 +65,75 @@ export default function ShiftCalendarPage() {
         });
       }, 0);
     }
+
+    try {
+        const storedShiftAssignments = localStorage.getItem(SHIFT_ASSIGNMENTS_STORAGE_KEY);
+        if (storedShiftAssignments) {
+            const parsedAssignments: ShiftAssignment[] = JSON.parse(storedShiftAssignments).map((sa: any) => ({
+                ...sa,
+                date: new Date(sa.date), 
+            }));
+            setShiftAssignments(parsedAssignments);
+        }
+    } catch (error) {
+        console.error("Error loading shift assignments from localStorage:", error);
+        // Do not toast here as it might conflict with render cycle on initial load
+    }
   }, []); // Removed toast from dependency array
 
-  const handleAssignSurgeonToDate = (surgeon: StoredUser, date: Date | undefined) => {
-    if (!date) {
-      toast({
-        title: "Error de Asignación",
-        description: "Por favor, seleccione una fecha en el calendario primero.",
-        variant: "destructive",
-      });
+
+  const handleOpenAssignDialog = () => {
+    if (!selectedCalendarDate) {
+      toast({ title: "Error", description: "Por favor, seleccione una fecha primero.", variant: "destructive" });
       return;
     }
 
-    setShiftAssignments(prevAssignments => {
-      const newAssignments = [...prevAssignments];
-      const shiftIndex = newAssignments.findIndex(s => isSameDay(s.date, date));
+    let assignmentForDate = shiftAssignments.find(sa => isSameDay(sa.date, selectedCalendarDate));
 
-      if (shiftIndex > -1) { // Shift for this day exists
-        const existingShift = { ...newAssignments[shiftIndex] };
-        if (!existingShift.surgeons.includes(surgeon.nombreCompleto)) {
-          existingShift.surgeons = [...existingShift.surgeons, surgeon.nombreCompleto];
-          newAssignments[shiftIndex] = existingShift;
-          toast({ title: "Turno Actualizado", description: `${surgeon.nombreCompleto} añadido al turno del ${date.toLocaleDateString('es-ES')}.` });
-        } else {
-          toast({ title: "Información", description: `${surgeon.nombreCompleto} ya está asignado a este turno.`, variant: "default" });
-          return prevAssignments; // No change needed
-        }
-      } else { // No shift for this day, create new one
-        const newShift: ShiftAssignment = {
-          id: new Date().getTime().toString(), // Simple unique ID
-          date: date,
-          shiftLabel: 'Turno Asignado',
-          surgeons: [surgeon.nombreCompleto],
-          bgColorClass: 'bg-purple-100 text-purple-800', 
-          borderColorClass: 'border-purple-300',
-        };
-        newAssignments.push(newShift);
-        toast({ title: "Turno Creado", description: `${surgeon.nombreCompleto} asignado a un nuevo turno el ${date.toLocaleDateString('es-ES')}.` });
-      }
-      return newAssignments.sort((a, b) => a.date.getTime() - b.date.getTime()); // Keep shifts sorted by date
-    });
+    if (!assignmentForDate) {
+      const template = getShiftTemplateForDate(selectedCalendarDate);
+      assignmentForDate = {
+        id: selectedCalendarDate.toISOString(), 
+        date: selectedCalendarDate,
+        shiftLabel: template.shiftLabel,
+        bgColorClass: template.bgColorClass,
+        borderColorClass: template.borderColorClass,
+        assignedPersonnel: [],
+      };
+    }
+    setEditingShiftAssignment(assignmentForDate);
+    setIsAssignDialogOpen(true);
   };
 
+  const handleSaveShiftPersonnel = (updatedPersonnel: AssignedPersonnel[]) => {
+    if (!editingShiftAssignment) return;
+
+    const updatedAssignment = { ...editingShiftAssignment, assignedPersonnel: updatedPersonnel };
+    
+    setShiftAssignments(prevAssignments => {
+      const existingIndex = prevAssignments.findIndex(sa => sa.id === updatedAssignment.id);
+      let newAssignments;
+      if (existingIndex > -1) {
+        newAssignments = [...prevAssignments];
+        newAssignments[existingIndex] = updatedAssignment;
+      } else {
+        newAssignments = [...prevAssignments, updatedAssignment];
+      }
+      
+      try {
+        localStorage.setItem(SHIFT_ASSIGNMENTS_STORAGE_KEY, JSON.stringify(newAssignments.map(sa => ({...sa, date: sa.date.toISOString()}))));
+      } catch (error) {
+        console.error("Error saving shift assignments to localStorage:", error);
+        toast({ title: "Error de Guardado", description: "No se pudieron guardar los cambios en localStorage.", variant: "destructive"});
+      }
+      return newAssignments.sort((a, b) => a.date.getTime() - b.date.getTime());
+    });
+
+    toast({ title: "Turno Actualizado", description: `Personal del turno para ${format(updatedAssignment.date, 'PPP', { locale: es})} guardado.` });
+    setIsAssignDialogOpen(false);
+    setEditingShiftAssignment(undefined);
+  };
+  
   return (
     <div className="space-y-6">
       <Card className="shadow-xl">
@@ -104,59 +142,53 @@ export default function ShiftCalendarPage() {
           <div>
             <CardTitle className="text-2xl font-bold">Calendario de Turnos de Cirujanos</CardTitle>
             <CardDescription className="text-md">
-              Visualiza y gestiona la asignación de turnos. Selecciona una fecha y luego un cirujano para asignar.
+              Visualiza y gestiona la asignación de personal a los turnos. Selecciona una fecha y luego gestiona el personal.
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
           <div className="mb-6 flex flex-col sm:flex-row items-center gap-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  disabled={!selectedCalendarDate || registeredSurgeons.length === 0}
-                  className="h-11 text-base w-full sm:w-auto"
-                >
-                  <PlusCircle className="mr-2 h-5 w-5" />
-                  Asignar Cirujano a Fecha
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuLabel>Seleccionar Cirujano</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {registeredSurgeons.length > 0 ? (
-                  registeredSurgeons.map(surgeon => (
-                    <DropdownMenuItem
-                      key={surgeon.email}
-                      onSelect={() => handleAssignSurgeonToDate(surgeon, selectedCalendarDate)}
-                      disabled={!selectedCalendarDate}
-                    >
-                      <Users className="mr-2 h-4 w-4" />
-                      {surgeon.nombreCompleto}
-                    </DropdownMenuItem>
-                  ))
-                ) : (
-                  <DropdownMenuItem disabled>
-                    <AlertTriangle className="mr-2 h-4 w-4 text-orange-500" />
-                    No hay cirujanos registrados
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              onClick={handleOpenAssignDialog}
+              disabled={!selectedCalendarDate}
+              className="h-11 text-base w-full sm:w-auto"
+            >
+              <Edit className="mr-2 h-5 w-5" />
+              Gestionar Personal del Turno
+            </Button>
             
             {selectedCalendarDate && (
               <p className="text-sm text-muted-foreground border border-dashed border-border p-2 rounded-md">
-                Fecha seleccionada: <span className="font-semibold text-foreground">{selectedCalendarDate.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                Fecha seleccionada: <span className="font-semibold text-foreground">{format(selectedCalendarDate, 'PPP', { locale: es})}</span>
               </p>
             )}
           </div>
           <ShiftCalendarView 
             selectedDate={selectedCalendarDate}
             onDateSelect={setSelectedCalendarDate}
-            shiftData={shiftAssignments}
+            shiftData={shiftAssignments} 
           />
         </CardContent>
       </Card>
+
+      {editingShiftAssignment && selectedCalendarDate && (
+        <AssignShiftPersonnelDialog
+          isOpen={isAssignDialogOpen}
+          onOpenChange={(open) => {
+            setIsAssignDialogOpen(open);
+            if (!open) setEditingShiftAssignment(undefined); // Clear editing state when dialog closes
+          }}
+          selectedDate={selectedCalendarDate}
+          shiftDetails={{ // Pass only necessary details for display
+             shiftLabel: editingShiftAssignment.shiftLabel,
+             bgColorClass: editingShiftAssignment.bgColorClass,
+             borderColorClass: editingShiftAssignment.borderColorClass,
+          }}
+          currentAssignments={editingShiftAssignment.assignedPersonnel}
+          registeredSurgeons={registeredSurgeons}
+          onSave={handleSaveShiftPersonnel}
+        />
+      )}
     </div>
   );
 }
-

@@ -4,6 +4,14 @@ import type * as LucideIcons from 'lucide-react';
 // This type will ensure that only valid Lucide icon names are used.
 export type IconName = keyof typeof LucideIcons;
 
+export type SurgeonRole = 'primer' | 'segundo' | 'becado' | 'interno' | 'volante';
+
+export interface AssignedPersonnel {
+  surgeonId: string; // Typically the email or a unique ID
+  surgeonName: string;
+  role: SurgeonRole;
+}
+
 export interface Surgery {
   id: string;
   // From form
@@ -48,10 +56,10 @@ export interface StoredUser {
 }
 
 export interface ShiftAssignment {
-  id: string;
+  id: string; // Unique ID for this specific assignment on a date, can be `date.toISOString()`
   date: Date;
-  shiftLabel: string;
-  surgeons: string[]; 
+  shiftLabel: string; // e.g., "Turno Lunes", "Volante 1"
+  assignedPersonnel: AssignedPersonnel[]; 
   bgColorClass: string; 
   borderColorClass: string; 
 }
@@ -64,8 +72,9 @@ export interface NonSurgicalPatient {
   attending: string;
   entryTimestamp: string; // ISO string
   // Add other fields from NonSurgicalRegistrationForm if needed for display/editing
-  rut?: string;
+  patientId?: string; // Changed from rut for consistency
   edad?: number;
+  ubicacionCama?: string;
   tratamiento?: string;
   comentarios?: string;
 }
@@ -79,3 +88,4 @@ export interface ShiftNovelty {
   entryTimestamp: string; // ISO string
   // date could be implicitly today for DailyLog, or stored if novelties can be for other days
 }
+
