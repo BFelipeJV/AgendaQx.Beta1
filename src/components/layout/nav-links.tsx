@@ -28,7 +28,6 @@ import { ChevronDown } from 'lucide-react';
 const getIconComponent = (iconName?: IconName): React.ComponentType<{ className?: string }> | null => {
   if (!iconName) return null;
   const IconComponent = LucideIcons[iconName as keyof typeof LucideIcons] as React.ComponentType<{ className?: string }>;
-  // Check if it's a valid React component (functional or forwardRef)
   if (typeof IconComponent === 'function' || (IconComponent && typeof (IconComponent as any).$$typeof === 'symbol' && (IconComponent as any).$$typeof.toString().includes('react.'))) {
     return IconComponent;
   }
@@ -65,16 +64,14 @@ export default function NavLinks({ navItems, isMobile = false }: NavLinksProps) 
       );
     }
     
-    // Ensure item.href is defined before passing to Link for actual links
     if (!item.href && item.subItems && item.subItems.length > 0) {
-        // This is an accordion trigger, not a direct link
-        // The rendering is handled by the AccordionTrigger mapping below
         return null; 
     }
 
+    if (!item.href) return null; // Ensure href exists for Link
 
     return (
-      <Link href={item.href!} legacyBehavior passHref>
+      <Link href={item.href} legacyBehavior passHref>
         <SidebarMenuButton
           asChild={false}
           isActive={isActive}
@@ -84,7 +81,7 @@ export default function NavLinks({ navItems, isMobile = false }: NavLinksProps) 
             isSubItem && "pl-8 pr-2 py-1.5 h-auto text-sm",
             isSubItem && "group-data-[collapsible=icon]:pl-2 group-data-[collapsible=icon]:pr-2"
           )}
-          tooltip={!isSubItem && !isMobile && !item.subItems ? tooltipContentProps : undefined} // Tooltip only for direct links in collapsed non-mobile
+          tooltip={!isSubItem && !isMobile && !item.subItems ? tooltipContentProps : undefined}
           aria-label={item.title}
         >
           {IconComponent && <IconComponent className={cn("h-5 w-5", isSubItem && "h-4 w-4")} />}
@@ -182,7 +179,7 @@ export default function NavLinks({ navItems, isMobile = false }: NavLinksProps) 
                               {ParentIconComponent && <ParentIconComponent className="h-5 w-5 shrink-0" />}
                               <span className="truncate group-data-[collapsible=icon]:hidden">{item.title}</span>
                               {item.label && <span className="ml-auto text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">{item.label}</span>}
-                              <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 ml-auto group-data-[collapsible=icon]:hidden group-data-[state=open]:rotate-180" />
+                              {/* The ChevronDown is automatically added by AccordionTrigger, so no need to add it manually here */}
                           </div>
                       </TooltipTrigger>
                       {parentTooltipContentProps && <TooltipContent {...parentTooltipContentProps} className="group-data-[collapsible=icon]:block hidden" />}
