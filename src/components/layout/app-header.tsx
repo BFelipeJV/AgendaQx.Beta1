@@ -1,3 +1,6 @@
+
+'use client';
+
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -12,14 +15,44 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, UserCircle } from 'lucide-react';
 import { LogoIcon } from '@/components/icons/logo';
-import { APP_HEADER_TITLE, NAV_ITEMS_MAIN, NAV_ITEMS_AUTH } from '@/lib/constants';
+import { APP_HEADER_TITLE, NAV_ITEMS_MAIN, NAV_ITEMS_AUTH, CURRENT_USER_SESSION_KEY } from '@/lib/constants';
 import NavLinks from '@/components/layout/nav-links';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useRouter } from 'next/navigation'; // Import useRouter
+import { useEffect, useState } from 'react';
 
+interface CurrentUser {
+  nombreCompleto: string;
+  email: string;
+  rol: string;
+}
 
 export default function AppHeader() {
-  // Placeholder user data
-  const userName = "Dr. Ejemplo"; // Can be localized or fetched
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+
+  useEffect(() => {
+    try {
+      const userSessionJson = localStorage.getItem(CURRENT_USER_SESSION_KEY);
+      if (userSessionJson) {
+        setCurrentUser(JSON.parse(userSessionJson));
+      }
+    } catch (error) {
+      console.error("Error loading user session from localStorage in AppHeader:", error);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem(CURRENT_USER_SESSION_KEY);
+    } catch (error) {
+      console.error("Error removing user session from localStorage:", error);
+    }
+    setCurrentUser(null); // Clear user state in header
+    router.push('/login'); // Navigate to login page
+  };
+  
+  const userName = currentUser?.nombreCompleto || "Usuario";
   const userInitials = userName.split(" ").map(n => n[0]).join("").substring(0,2).toUpperCase();
 
   return (
@@ -40,7 +73,10 @@ export default function AppHeader() {
                 </Link>
               </div>
               <nav className="flex-1 overflow-auto py-4">
-                <NavLinks navItems={[...NAV_ITEMS_MAIN, ...NAV_ITEMS_AUTH]} isMobile={true} />
+                {/* Pass handleLogout to NavLinks if logout is managed there, or handle directly */}
+                <NavLinks navItems={[...NAV_ITEMS_MAIN, ...NAV_ITEMS_AUTH.map(item => 
+                    item.href === '/login' ? { ...item, action: handleLogout } : item
+                )]} isMobile={true} />
               </nav>
             </SheetContent>
           </Sheet>
@@ -71,9 +107,13 @@ export default function AppHeader() {
             <DropdownMenuItem>Configuración</DropdownMenuItem>
             <DropdownMenuItem>Soporte</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <Link href="/login">
-              <DropdownMenuItem>Cerrar Sesión</DropdownMenuItem>
-            </Link>
+            {/* 
+              The Link component around DropdownMenuItem is removed here because
+              the navigation is now handled by onClick for logout.
+              If NavLinks handles logout, this specific DropdownMenuItem can be simplified.
+              For direct handling here:
+            */}
+            <DropdownMenuItem onClick={handleLogout}>Cerrar Sesión</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -9,7 +9,7 @@ export type SurgeonRole = 'primer' | 'segundo' | 'becado' | 'interno' | 'volante
 export interface AssignedPersonnel {
   surgeonId: string; // Typically the email or a unique ID
   surgeonName: string;
-  role: SurgeonRole;
+  role: SurgeonRole; 
 }
 
 export interface Surgery {
@@ -40,13 +40,14 @@ export interface Surgery {
 
 export interface NavItem {
   title: string;
-  href?: string; // Optional if it's a group header
+  href?: string; 
   iconName?: IconName; 
   disabled?: boolean;
   external?: boolean;
   label?: string;
   description?: string;
-  subItems?: NavItem[]; // For nested/collapsible items
+  subItems?: NavItem[]; 
+  action?: () => void; // For actions like logout
 }
 
 export interface StoredUser {

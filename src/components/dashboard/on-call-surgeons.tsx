@@ -4,19 +4,37 @@
 import { useState, useEffect } from 'react';
 import { format, isSameDay, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { ShiftAssignment } from '@/lib/types';
-import { SHIFT_ASSIGNMENTS_STORAGE_KEY } from '@/lib/constants';
+import type { ShiftAssignment, StoredUser } from '@/lib/types'; // StoredUser might be useful if we fetch more user details
+import { SHIFT_ASSIGNMENTS_STORAGE_KEY, CURRENT_USER_SESSION_KEY } from '@/lib/constants';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { UserCircle, CalendarDays } from 'lucide-react';
+
+interface CurrentUser {
+  nombreCompleto: string;
+  email: string;
+  rol: string;
+}
 
 export default function OnCallSurgeonsDisplay() {
   const [currentDate, setCurrentDate] = useState('');
   const [onCallSurgeons, setOnCallSurgeons] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const currentUserName = "Usuario Actual"; // Placeholder
+  const [loggedInUserName, setLoggedInUserName] = useState<string>('Usuario');
 
   useEffect(() => {
+    // Load current user from session
+    try {
+      const userSessionJson = localStorage.getItem(CURRENT_USER_SESSION_KEY);
+      if (userSessionJson) {
+        const currentUser: CurrentUser = JSON.parse(userSessionJson);
+        setLoggedInUserName(currentUser.nombreCompleto);
+      }
+    } catch (error) {
+      console.error("Error loading user session from localStorage:", error);
+      setLoggedInUserName('Usuario'); // Fallback
+    }
+
     const today = new Date();
     setCurrentDate(format(today, "EEEE d 'de' MMMM 'de' yyyy", { locale: es }));
 
@@ -25,7 +43,7 @@ export default function OnCallSurgeonsDisplay() {
       if (storedShiftAssignmentsJSON) {
         const allAssignments: ShiftAssignment[] = JSON.parse(storedShiftAssignmentsJSON).map((sa: any) => ({
             ...sa,
-            date: parseISO(sa.date),
+            date: parseISO(sa.date), // Ensure date is parsed
         }));
         
         const todayAssignments = allAssignments.find(assignment => 
@@ -54,7 +72,7 @@ export default function OnCallSurgeonsDisplay() {
       <CardContent className="pt-6 space-y-3 text-center">
         <div className="flex items-center justify-center space-x-2 text-muted-foreground">
           <UserCircle className="h-5 w-5" />
-          <p className="text-sm font-medium">{currentUserName}</p>
+          <p className="text-sm font-medium">{loggedInUserName}</p>
         </div>
         <div className="flex items-center justify-center space-x-2 text-foreground">
            <CalendarDays className="h-5 w-5" />

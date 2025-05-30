@@ -15,7 +15,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"; // Corrected import path
+} from "@/components/ui/tooltip";
 import {
   Accordion,
   AccordionContent,
@@ -23,7 +23,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import * as LucideIcons from 'lucide-react';
-import { ChevronDown } from 'lucide-react';
+// ChevronDown is automatically added by AccordionTrigger, so it's not explicitly needed here
+// unless used for a different purpose.
 
 const getIconComponent = (iconName?: IconName): React.ComponentType<{ className?: string }> | null => {
   if (!iconName) return null;
@@ -31,6 +32,7 @@ const getIconComponent = (iconName?: IconName): React.ComponentType<{ className?
   if (typeof IconComponent === 'function' || (IconComponent && typeof (IconComponent as any).$$typeof === 'symbol' && (IconComponent as any).$$typeof.toString().includes('react.'))) {
     return IconComponent;
   }
+  console.warn(`Icon "${iconName}" not found in lucide-react.`);
   return null;
 };
 
@@ -42,38 +44,53 @@ interface NavLinksProps {
 export default function NavLinks({ navItems, isMobile = false }: NavLinksProps) {
   const pathname = usePathname();
 
-  const renderNavItem = (item: NavItem, isSubItem = false) => {
+  const renderNavItem = (item: NavItem, isSubItem = false, isMobileLink = false) => {
     const IconComponent = getIconComponent(item.iconName);
     let isActive = item.href ? (pathname === item.href || (item.href !== '/dashboard' && item.href !== '/' && pathname.startsWith(item.href))) : false;
 
     if (item.subItems && item.subItems.length > 0) {
       isActive = isActive || item.subItems.some(subItem => subItem.href && (pathname === subItem.href || (subItem.href !== '/dashboard' && subItem.href !== '/' && pathname.startsWith(subItem.href))));
     }
-
+    
     const tooltipContentProps: React.ComponentProps<typeof TooltipContent> | undefined = item.description ? {children: item.description, side: 'right', align: 'center'} : undefined;
 
-    if (!item.href && !item.subItems) { // Item is purely a label or non-interactive
+    const buttonContent = (
+      <>
+        {IconComponent && <IconComponent className={cn("h-5 w-5", isSubItem && "h-4 w-4")} />}
+        <span className={cn("truncate", isSubItem && "text-sm font-normal")}>{item.title}</span>
+        {item.label && !isSubItem && !isMobileLink && ( // Hide label on mobile for cleaner look
+          <span className="ml-auto text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+            {item.label}
+          </span>
+        )}
+      </>
+    );
+
+    if (item.action) { // Handle items with custom actions, like logout
       return (
-        <div className={cn(
-          "w-full flex items-center gap-2 p-2 text-left text-sm text-sidebar-foreground/70",
-          isSubItem && "pl-8 pr-2 py-1.5 h-auto",
-        )}>
-          {IconComponent && <IconComponent className={cn("h-5 w-5", isSubItem && "h-4 w-4")} />}
-          <span className={cn("truncate", isSubItem && "text-sm font-normal")}>{item.title}</span>
-        </div>
+        <SidebarMenuButton
+          onClick={item.action}
+          isActive={isActive} // isActive might not be relevant for action buttons
+          disabled={item.disabled}
+          className={cn(
+            "w-full",
+            isSubItem && "pl-8 pr-2 py-1.5 h-auto text-sm",
+            isSubItem && "group-data-[collapsible=icon]:pl-2 group-data-[collapsible=icon]:pr-2"
+          )}
+          tooltip={!isSubItem && !isMobileLink && !item.subItems ? tooltipContentProps : undefined}
+          aria-label={item.title}
+        >
+          {buttonContent}
+        </SidebarMenuButton>
       );
     }
-    
-    if (!item.href && item.subItems && item.subItems.length > 0) {
-        return null; 
-    }
 
-    if (!item.href) return null; // Ensure href exists for Link
+    if (!item.href) return null; // Ensure href exists for Link if no action
 
     return (
       <Link href={item.href} legacyBehavior passHref>
         <SidebarMenuButton
-          asChild={false}
+          asChild={false} // Important: asChild=false for Link to work with our styled button
           isActive={isActive}
           disabled={item.disabled}
           className={cn(
@@ -81,21 +98,10 @@ export default function NavLinks({ navItems, isMobile = false }: NavLinksProps) 
             isSubItem && "pl-8 pr-2 py-1.5 h-auto text-sm",
             isSubItem && "group-data-[collapsible=icon]:pl-2 group-data-[collapsible=icon]:pr-2"
           )}
-          tooltip={!isSubItem && !isMobile && !item.subItems ? tooltipContentProps : undefined}
+          tooltip={!isSubItem && !isMobileLink && !item.subItems ? tooltipContentProps : undefined}
           aria-label={item.title}
         >
-          {IconComponent && <IconComponent className={cn("h-5 w-5", isSubItem && "h-4 w-4")} />}
-          <span className={cn(
-            "truncate",
-            isSubItem && "text-sm font-normal"
-          )}>
-            {item.title}
-          </span>
-          {item.label && !isSubItem && (
-            <span className="ml-auto text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-              {item.label}
-            </span>
-          )}
+          {buttonContent}
         </SidebarMenuButton>
       </Link>
     );
@@ -108,12 +114,11 @@ export default function NavLinks({ navItems, isMobile = false }: NavLinksProps) 
     return acc;
   }, []);
 
-
   if (isMobile) {
     const mobileNavLinks: JSX.Element[] = [];
     navItems.forEach((item, idx) => {
-      if (item.href && !item.subItems) {
-        const renderedItem = renderNavItem(item, false);
+      if (item.href || item.action) { // Render if it's a link or an action
+        const renderedItem = renderNavItem(item, false, true);
         if (renderedItem) {
           mobileNavLinks.push(
             <SidebarMenuItem key={item.href || `${item.title}-${idx}-main`}>
@@ -124,8 +129,8 @@ export default function NavLinks({ navItems, isMobile = false }: NavLinksProps) 
       }
       if (item.subItems) {
         item.subItems.forEach((subItem, subIdx) => {
-          if (subItem.href) {
-            const renderedSubItem = renderNavItem(subItem, true);
+          if (subItem.href || subItem.action) {
+            const renderedSubItem = renderNavItem(subItem, true, true);
             if (renderedSubItem) {
               mobileNavLinks.push(
                 <SidebarMenuItem key={subItem.href || `${subItem.title}-${idx}-${subIdx}`}>
@@ -172,14 +177,13 @@ export default function NavLinks({ navItems, isMobile = false }: NavLinksProps) 
                 >
                   <Tooltip>
                       <TooltipTrigger asChild>
-                          <div className={cn(
+                          <div className={cn( // This div receives the flex and styling for the trigger's content
                               "flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none",
                               "group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:p-2"
                           )}>
                               {ParentIconComponent && <ParentIconComponent className="h-5 w-5 shrink-0" />}
                               <span className="truncate group-data-[collapsible=icon]:hidden">{item.title}</span>
                               {item.label && <span className="ml-auto text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">{item.label}</span>}
-                              {/* The ChevronDown is automatically added by AccordionTrigger, so no need to add it manually here */}
                           </div>
                       </TooltipTrigger>
                       {parentTooltipContentProps && <TooltipContent {...parentTooltipContentProps} className="group-data-[collapsible=icon]:block hidden" />}
@@ -188,8 +192,7 @@ export default function NavLinks({ navItems, isMobile = false }: NavLinksProps) 
                 <AccordionContent className="pb-1 pt-1 group-data-[collapsible=icon]:hidden">
                   <SidebarMenu className="ml-[calc(0.5rem_+_1px)] border-l border-sidebar-border pl-3.5 py-1 space-y-0.5">
                     {item.subItems.map((subItem) => {
-                      if (!subItem.href) return null; 
-                      const renderedSubItem = renderNavItem(subItem, true);
+                      const renderedSubItem = renderNavItem(subItem, true, false);
                       if (renderedSubItem) {
                         return (
                           <SidebarMenuItem key={subItem.href || subItem.title}>
@@ -204,11 +207,12 @@ export default function NavLinks({ navItems, isMobile = false }: NavLinksProps) 
               </AccordionItem>
             );
           } else {
-            if (!item.href) return null; 
-            const renderedItem = renderNavItem(item);
+            const renderedItem = renderNavItem(item, false, false);
             if (renderedItem) {
                 return (
-                  <SidebarMenuItem key={item.href} className="rounded-md">
+                  // Use a div or fragment if SidebarMenuItem is not suitable for non-sub-items
+                  // For consistency, if it's a top-level link, it should still be wrapped.
+                  <SidebarMenuItem key={item.href || item.title} className="rounded-md">
                     {renderedItem}
                   </SidebarMenuItem>
                 );

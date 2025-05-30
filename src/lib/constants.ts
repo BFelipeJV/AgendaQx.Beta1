@@ -10,7 +10,7 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
   },
   {
     title: 'Registrar',
-    iconName: 'Edit2', // Using a general edit icon for the group
+    iconName: 'Edit2', 
     description: 'Añadir nuevos registros al sistema.',
     subItems: [
       {
@@ -41,7 +41,7 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
   },
   {
     title: 'Libro',
-    iconName: 'BookOpen', // General book icon for the group
+    iconName: 'BookOpen', 
     description: 'Consultar registros diarios e históricos.',
     subItems: [
       {
@@ -60,7 +60,7 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
   },
   {
     title: 'Gestión de Turnos',
-    iconName: 'Settings2', // General settings/management icon
+    iconName: 'Settings2', 
     description: 'Gestionar calendario de turnos y solicitudes.',
     subItems: [
       {
@@ -88,7 +88,7 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
 export const NAV_ITEMS_AUTH: NavItem[] = [
     {
     title: 'Cerrar Sesión',
-    href: '/login',
+    href: '/login', // The actual navigation will be handled by onClick now
     iconName: 'LogOut',
     description: 'Salir de tu cuenta.',
   }
@@ -101,3 +101,4 @@ export const MOCK_SURGERIES_STORAGE_KEY = 'mockRegisteredSurgeries';
 export const MOCK_NON_SURGICAL_STORAGE_KEY = 'mockRegisteredNonSurgical';
 export const MOCK_NOVELTIES_STORAGE_KEY = 'mockRegisteredNovelties';
 export const SHIFT_ASSIGNMENTS_STORAGE_KEY = 'mockShiftAssignments';
+export const CURRENT_USER_SESSION_KEY = 'currentUserSession';

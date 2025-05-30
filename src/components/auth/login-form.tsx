@@ -20,7 +20,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState, type FormEvent } from 'react';
 import { LogIn } from 'lucide-react';
-import { MOCK_USERS_STORAGE_KEY } from '@/lib/constants';
+import { MOCK_USERS_STORAGE_KEY, CURRENT_USER_SESSION_KEY } from '@/lib/constants';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Dirección de correo electrónico inválida.' }),
@@ -54,8 +54,7 @@ export default function LoginForm() {
     await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
 
     let loggedIn = false;
-    let userName = '';
-    // let userRole = ''; // Not used currently but good for future
+    let userToSession: StoredUser | null = null;
 
     // 1. Check localStorage
     try {
@@ -68,8 +67,7 @@ export default function LoginForm() {
 
       if (foundUser) {
         loggedIn = true;
-        userName = foundUser.nombreCompleto;
-        // userRole = foundUser.rol;
+        userToSession = foundUser;
       }
     } catch (error) {
       console.error("Error reading users from localStorage:", error);
@@ -78,14 +76,27 @@ export default function LoginForm() {
     // 2. If not found in localStorage, check default admin credentials
     if (!loggedIn && values.email.toLowerCase() === "admin@example.com" && values.password === "password") {
       loggedIn = true;
-      userName = "Administrador";
-      // userRole = "administrador";
+      userToSession = {
+        nombreCompleto: "Administrador Principal",
+        email: "admin@example.com",
+        rol: "administrador",
+        // No password stored for default admin in session for this example
+      };
     }
     
-    if (loggedIn) {
+    if (loggedIn && userToSession) {
+      try {
+        localStorage.setItem(CURRENT_USER_SESSION_KEY, JSON.stringify({
+          nombreCompleto: userToSession.nombreCompleto,
+          email: userToSession.email,
+          rol: userToSession.rol,
+        }));
+      } catch (error) {
+        console.error("Error saving user session to localStorage:", error);
+      }
       toast({
         title: 'Inicio de Sesión Exitoso',
-        description: `Bienvenido, ${userName}. Redirigiendo...`,
+        description: `Bienvenido, ${userToSession.nombreCompleto}. Redirigiendo...`,
       });
       router.push('/dashboard'); 
     } else {
