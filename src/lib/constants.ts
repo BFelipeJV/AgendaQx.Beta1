@@ -10,7 +10,7 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
   },
   {
     title: 'Registrar',
-    iconName: 'Edit2', 
+    iconName: 'Edit2',
     description: 'Añadir nuevos registros al sistema.',
     subItems: [
       {
@@ -41,13 +41,13 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
   },
   {
     title: 'Libro',
-    iconName: 'BookOpen', 
+    iconName: 'BookOpen',
     description: 'Consultar registros diarios e históricos.',
     subItems: [
       {
         title: 'Hoja Diaria',
         href: '/agenda/hoy',
-        iconName: 'ListChecks', 
+        iconName: 'ListChecks',
         description: 'Resumen de actividades y estado de pacientes para hoy.',
       },
       {
@@ -60,7 +60,7 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
   },
   {
     title: 'Gestión de Turnos',
-    iconName: 'Settings2', 
+    iconName: 'Settings2',
     description: 'Gestionar calendario de turnos y solicitudes.',
     subItems: [
       {
@@ -78,21 +78,37 @@ export const NAV_ITEMS_MAIN: NavItem[] = [
     ]
   },
   {
-    title: 'Registrar Usuarios',
-    href: '/admin/registrar-usuarios',
-    iconName: 'UserPlus',
-    description: 'Crear nuevas cuentas de usuario para la plataforma (Admin).',
+    title: 'Administración de Usuarios',
+    iconName: 'Users', 
+    description: 'Gestionar cuentas de usuario de la plataforma.',
+    adminOnly: true,
+    subItems: [
+        {
+            title: 'Registrar Nuevo Usuario',
+            href: '/admin/registrar-usuarios',
+            iconName: 'UserPlus',
+            description: 'Crear nuevas cuentas de usuario (Admin).',
+            adminOnly: true,
+        },
+        {
+            title: 'Gestionar Usuarios',
+            href: '/admin/gestionar-usuarios',
+            iconName: 'ListOrdered', // Changed icon
+            description: 'Editar o eliminar usuarios existentes (Admin).',
+            adminOnly: true,
+        }
+    ]
   },
 ];
 
 export const NAV_ITEMS_AUTH: NavItem[] = [
     {
     title: 'Cerrar Sesión',
-    href: '/login', // The actual navigation will be handled by onClick now
+    href: '/login', // Will navigate to login, AppHeader handles actual logout logic
     iconName: 'LogOut',
     description: 'Salir de tu cuenta.',
   }
-]
+];
 
 export const APP_NAME = "AgendaQx";
 export const APP_HEADER_TITLE = "AGENDA QX";

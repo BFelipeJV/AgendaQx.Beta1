@@ -12,14 +12,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, UserCircle } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Menu, UserCircle, LogOut } from 'lucide-react';
 import { LogoIcon } from '@/components/icons/logo';
 import { APP_HEADER_TITLE, NAV_ITEMS_MAIN, NAV_ITEMS_AUTH, CURRENT_USER_SESSION_KEY } from '@/lib/constants';
 import NavLinks from '@/components/layout/nav-links';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { useRouter } from 'next/navigation'; 
 import { useEffect, useState } from 'react';
+import { cn } from '@/lib/utils';
+import { SidebarMenuButton } from '@/components/ui/sidebar'; // For mobile logout button
 
 interface CurrentUser {
   nombreCompleto: string;
@@ -30,6 +32,8 @@ interface CurrentUser {
 export default function AppHeader() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
 
   useEffect(() => {
     try {
@@ -48,8 +52,9 @@ export default function AppHeader() {
     } catch (error) {
       console.error("Error removing user session from localStorage:", error);
     }
-    setCurrentUser(null); // Clear user state in header
-    router.push('/login'); // Navigate to login page
+    setCurrentUser(null); 
+    setIsSheetOpen(false); // Close sheet on logout
+    router.push('/login'); 
   };
   
   const userName = currentUser?.nombreCompleto || "Usuario";
@@ -58,7 +63,7 @@ export default function AppHeader() {
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-card px-4 md:px-6 shadow-sm">
       <div className="flex items-center gap-2 md:hidden">
-         <Sheet>
+         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="shrink-0">
                 <Menu className="h-5 w-5" />
@@ -67,17 +72,24 @@ export default function AppHeader() {
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col p-0">
               <div className="flex h-16 items-center border-b px-6">
-                <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-lg">
+                <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-lg" onClick={() => setIsSheetOpen(false)}>
                   <LogoIcon className="h-6 w-6 text-primary" />
                   <span>{APP_HEADER_TITLE}</span>
                 </Link>
               </div>
               <nav className="flex-1 overflow-auto py-4">
-                {/* Pass handleLogout to NavLinks if logout is managed there, or handle directly */}
-                <NavLinks navItems={[...NAV_ITEMS_MAIN, ...NAV_ITEMS_AUTH.map(item => 
-                    item.href === '/login' ? { ...item, action: handleLogout } : item
-                )]} isMobile={true} />
+                <NavLinks navItems={NAV_ITEMS_MAIN} isMobile={true} onItemClick={() => setIsSheetOpen(false)} />
               </nav>
+              {/* Specific Logout Button for Mobile Sheet */}
+              <div className="mt-auto border-t p-4">
+                <SidebarMenuButton
+                  onClick={handleLogout}
+                  className="w-full"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="truncate">Cerrar Sesión</span>
+                </SidebarMenuButton>
+              </div>
             </SheetContent>
           </Sheet>
       </div>
@@ -107,12 +119,6 @@ export default function AppHeader() {
             <DropdownMenuItem>Configuración</DropdownMenuItem>
             <DropdownMenuItem>Soporte</DropdownMenuItem>
             <DropdownMenuSeparator />
-            {/* 
-              The Link component around DropdownMenuItem is removed here because
-              the navigation is now handled by onClick for logout.
-              If NavLinks handles logout, this specific DropdownMenuItem can be simplified.
-              For direct handling here:
-            */}
             <DropdownMenuItem onClick={handleLogout}>Cerrar Sesión</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
