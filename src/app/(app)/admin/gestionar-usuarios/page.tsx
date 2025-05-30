@@ -17,10 +17,7 @@ export default function ManageUsersPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {/* <UserManagementTable /> */}
-          <p className="text-muted-foreground">
-            La tabla de gestión de usuarios con opciones de edición y eliminación se implementará aquí.
-          </p>
+          <UserManagementTable />
         </CardContent>
       </Card>
     </div>

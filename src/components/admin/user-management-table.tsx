@@ -1,56 +1,109 @@
 
 'use client';
 
-// Placeholder component for User Management Table
-
-import { StoredUser } from '@/lib/types';
+import type { StoredUser } from '@/lib/types';
 import { MOCK_USERS_STORAGE_KEY } from '@/lib/constants';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableCaption } from '@/components/ui/table';
-import { Edit3, Trash2 } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableCaption,
+} from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Edit3, Trash2, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function UserManagementTable() {
   const [users, setUsers] = useState<StoredUser[]>([]);
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const [userToDelete, setUserToDelete] = useState<StoredUser | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
+    setIsLoading(true);
     try {
       const storedUsersJSON = localStorage.getItem(MOCK_USERS_STORAGE_KEY);
       if (storedUsersJSON) {
         setUsers(JSON.parse(storedUsersJSON));
+      } else {
+        setUsers([]);
       }
     } catch (error) {
       console.error("Error loading users from localStorage:", error);
       toast({
-        title: "Error",
-        description: "No se pudieron cargar los usuarios.",
+        title: "Error de Carga",
+        description: "No se pudieron cargar los usuarios desde el almacenamiento local.",
         variant: "destructive",
       });
+      setUsers([]);
     }
+    setIsLoading(false);
   }, [toast]);
 
   const handleEditUser = (email: string) => {
-    // TODO: Implement edit functionality (e.g., open a modal or navigate to an edit page)
+    // TODO: Implement full edit functionality (e.g., open a modal or navigate to an edit page)
     toast({
       title: "Editar Usuario (Próximamente)",
-      description: `Funcionalidad para editar el usuario ${email} estará disponible pronto.`,
+      description: `La funcionalidad completa para editar el usuario ${email} estará disponible pronto.`,
     });
   };
 
-  const handleDeleteUser = (email: string) => {
-    // TODO: Implement delete functionality (with confirmation)
-    // This would involve updating localStorage and the local state
-    toast({
-      title: "Eliminar Usuario (Próximamente)",
-      description: `Funcionalidad para eliminar el usuario ${email} estará disponible pronto.`,
-      variant: "destructive"
-    });
+  const prepareDeleteUser = (user: StoredUser) => {
+    setUserToDelete(user);
+    setIsDeleteDialogOpen(true);
   };
+
+  const confirmDeleteUser = () => {
+    if (!userToDelete) return;
+
+    try {
+      const updatedUsers = users.filter(user => user.email !== userToDelete.email);
+      localStorage.setItem(MOCK_USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
+      setUsers(updatedUsers);
+      toast({
+        title: "Usuario Eliminado",
+        description: `El usuario ${userToDelete.nombreCompleto} ha sido eliminado exitosamente.`,
+      });
+    } catch (error) {
+      console.error("Error deleting user from localStorage:", error);
+      toast({
+        title: "Error al Eliminar",
+        description: "No se pudo eliminar el usuario.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
+    }
+  };
+
+  if (isLoading) {
+    return <p className="text-muted-foreground text-center py-4">Cargando usuarios...</p>;
+  }
 
   if (users.length === 0) {
-    return <p className="text-muted-foreground">No hay usuarios registrados para mostrar.</p>;
+    return (
+        <div className="text-center py-8">
+            <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">No hay usuarios registrados para mostrar.</p>
+            <p className="text-sm text-muted-foreground mt-1">Puedes registrar nuevos usuarios en la sección "Registrar Nuevo Usuario".</p>
+        </div>
+    );
   }
 
   return (
@@ -75,7 +128,7 @@ export default function UserManagementTable() {
                 <Button variant="outline" size="sm" onClick={() => handleEditUser(user.email)}>
                   <Edit3 className="h-4 w-4 mr-1" /> Editar
                 </Button>
-                <Button variant="destructive" size="sm" onClick={() => handleDeleteUser(user.email)}>
+                <Button variant="destructive" size="sm" onClick={() => prepareDeleteUser(user)}>
                   <Trash2 className="h-4 w-4 mr-1" /> Eliminar
                 </Button>
               </TableCell>
@@ -83,6 +136,21 @@ export default function UserManagementTable() {
           ))}
         </TableBody>
       </Table>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Confirmar Eliminación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. ¿Estás seguro de que quieres eliminar al usuario <span className="font-semibold">{userToDelete?.nombreCompleto}</span> ({userToDelete?.email})?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setUserToDelete(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteUser} className="bg-destructive hover:bg-destructive/90">Eliminar Usuario</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
