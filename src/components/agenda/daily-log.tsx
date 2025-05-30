@@ -29,215 +29,97 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// --- More Descriptive Initial Dummy Data ---
-const todayDateString = format(new Date(), 'yyyy-MM-dd');
-const yesterdayDateString = format(new Date(new Date().setDate(new Date().getDate() - 1)), 'yyyy-MM-dd');
-const tomorrowDateString = format(new Date(new Date().setDate(new Date().getDate() + 1)), 'yyyy-MM-dd');
-
-const initialSurgeriesData: Surgery[] = [
-  // Completed for today
+// --- Initial Example Data (will be used if localStorage is empty) ---
+const initialSurgeries: Surgery[] = [
   {
-    id: 's_comp_001',
+    id: 's001',
     tipoIntervencion: 'cirugia',
-    patientName: 'Roberto Carlos Pérez',
-    patientId: '12.345.678-9',
-    edad: 55,
-    ubicacionCama: 'Pabellón 2, Cama 201',
-    procedureType: 'Colecistectomía Laparoscópica',
-    diagnosticoPreOperatorio: 'Colelitiasis sintomática, cólico biliar a repetición.',
-    diagnosticoPostOperatorio: 'Colecistectomía laparoscópica sin incidentes. Vesícula con múltiples cálculos.',
-    surgeon: 'Dr. Armando Casas',
-    date: todayDateString,
+    patientName: 'Ana Pérez (Ejemplo Hoy)',
+    patientId: '12345678-9',
+    procedureType: 'Apendicectomía',
+    diagnosticoPreOperatorio: 'Apendicitis Aguda',
+    status: 'Scheduled',
+    date: format(new Date(), 'yyyy-MM-dd'), // Today
     time: '09:00',
+    entryTimestamp: new Date().toISOString(),
+    surgeon: 'Dr. Casas',
     operatingRoom: 'Q1',
-    status: 'Completed',
-    entryTimestamp: new Date(new Date().setHours(9, 30, 0, 0)).toISOString(),
   },
   {
-    id: 's_comp_002',
+    id: 's002',
     tipoIntervencion: 'procedimiento',
-    patientName: 'Laura Fernández Gómez',
-    patientId: '15.789.123-K',
-    edad: 42,
-    ubicacionCama: 'Sala de Endoscopía 1',
-    procedureType: 'Endoscopía Digestiva Alta con Biopsia',
-    diagnosticoPreOperatorio: 'Dispepsia crónica, sospecha de gastritis.',
-    diagnosticoPostOperatorio: 'Gastritis eritematosa antral. Se toman biopsias.',
-    surgeon: 'Dra. Valeria Luna',
-    date: todayDateString,
-    time: '11:30',
-    operatingRoom: 'Endo1',
+    patientName: 'Luis Gómez (Ejemplo Hoy)',
+    patientId: '98765432-1',
+    procedureType: 'Endoscopía',
+    diagnosticoPreOperatorio: 'Dolor Abdominal',
     status: 'Completed',
-    entryTimestamp: new Date(new Date().setHours(12, 0, 0, 0)).toISOString(),
-  },
-  {
-    id: 's_comp_003',
-    tipoIntervencion: 'cirugia',
-    patientName: 'Martín Alonso Silva',
-    patientId: '10.987.654-3',
-    edad: 68,
-    ubicacionCama: 'Pabellón 1, Cama 105',
-    procedureType: 'Hernioplastia Inguinal Derecha',
-    diagnosticoPreOperatorio: 'Hernia inguinal derecha sintomática.',
-    diagnosticoPostOperatorio: 'Hernioplastia inguinal derecha con malla, sin complicaciones.',
-    surgeon: 'Dr. Esteban Morales',
-    date: todayDateString,
-    time: '14:00',
-    operatingRoom: 'Q2',
-    status: 'Completed',
-    entryTimestamp: new Date(new Date().setHours(15, 0, 0, 0)).toISOString(),
-  },
-  // Scheduled for today
-  {
-    id: 's_pend_001',
-    tipoIntervencion: 'cirugia',
-    patientName: 'Javier Ignacio Torres',
-    patientId: '20.111.222-3',
-    edad: 28,
-    ubicacionCama: 'Pre-Pabellón A',
-    procedureType: 'Reducción cerrada + osteosíntesis fractura de tobillo',
-    diagnosticoPreOperatorio: 'Fractura de tobillo derecho tipo Weber B, desplazada.',
-    surgeon: 'Equipo Traumatología de Turno',
-    date: todayDateString,
-    time: '17:00',
-    operatingRoom: 'Q1 (Estimado)',
-    status: 'Scheduled',
-    entryTimestamp: new Date(new Date().setHours(8, 0, 0, 0)).toISOString(),
-  },
-  {
-    id: 's_pend_002',
-    tipoIntervencion: 'procedimiento',
-    patientName: 'Mónica Alejandra Vargas',
-    patientId: '14.555.666-7',
-    edad: 58,
-    ubicacionCama: 'Sala de Procedimientos Menores',
-    procedureType: 'Instalación Catéter Venoso Central Subclavio',
-    diagnosticoPreOperatorio: 'Necesidad de acceso venoso central para antibioticoterapia prolongada.',
-    surgeon: 'Dr. Ricardo Acuña',
-    date: todayDateString,
-    time: '16:00',
-    operatingRoom: 'Proc. Menores',
-    status: 'Scheduled',
-    entryTimestamp: new Date(new Date().setHours(10, 30, 0, 0)).toISOString(),
-  },
-  {
-    id: 's_pend_003',
-    tipoIntervencion: 'cirugia',
-    patientName: 'Beatriz Elena Campos',
-    patientId: '13.001.002-K',
-    edad: 49,
-    ubicacionCama: 'Pendiente Asignación',
-    procedureType: 'Apendicectomía por Apendicitis Aguda',
-    diagnosticoPreOperatorio: 'Sospecha de Apendicitis Aguda. Dolor FID, leucocitosis.',
-    surgeon: 'Cirujano de Llamada',
-    date: todayDateString,
-    time: 'Urgente',
-    operatingRoom: 'Por definir',
-    status: 'Scheduled',
-    entryTimestamp: new Date(new Date().setHours(14, 15, 0, 0)).toISOString(),
-  },
-   // Example for yesterday (to test filtering)
-  {
-    id: 's00_yesterday',
-    tipoIntervencion: 'cirugia',
-    patientName: 'Paciente de Ayer Ejemplo',
-    patientId: 'P-YEST-01',
-    edad: 50,
-    procedureType: 'Cirugía de Ayer',
-    diagnosticoPreOperatorio: 'Condición de ayer',
-    status: 'Completed',
-    date: yesterdayDateString,
-    time: '10:00',
-    entryTimestamp: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString(),
-  },
-  // Example for tomorrow (to test filtering)
-  {
-    id: 's00_tomorrow',
-    tipoIntervencion: 'procedimiento',
-    patientName: 'Paciente de Mañana Ejemplo',
-    patientId: 'P-TOM-01',
-    edad: 60,
-    procedureType: 'Procedimiento de Mañana',
-    diagnosticoPreOperatorio: 'Condición de mañana',
-    status: 'Scheduled',
-    date: tomorrowDateString,
+    date: format(new Date(), 'yyyy-MM-dd'), // Today
     time: '11:00',
+    entryTimestamp: new Date(new Date().setHours(new Date().getHours() - 2)).toISOString(), // 2 hours ago
+    surgeon: 'Dra. Luna',
+    operatingRoom: 'Endo1',
+  },
+  {
+    id: 's003_yesterday',
+    tipoIntervencion: 'cirugia',
+    patientName: 'Carlos Solís (Ejemplo Ayer)',
+    patientId: '11223344-5',
+    procedureType: 'Colecistectomía',
+    diagnosticoPreOperatorio: 'Colelitiasis',
+    status: 'Completed',
+    date: format(new Date(new Date().setDate(new Date().getDate() - 1)), 'yyyy-MM-dd'), // Yesterday
+    time: '14:00',
+    entryTimestamp: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString(),
+    surgeon: 'Dr. Silva',
+    operatingRoom: 'Q2',
+  }
+];
+
+const initialNonSurgicalPatients: NonSurgicalPatient[] = [
+  {
+    id: 'ns001',
+    name: 'Laura Méndez (NQ Hoy)',
+    diagnosis: 'Neumonía Leve',
+    attending: 'Dr. Roca',
+    entryTimestamp: new Date().toISOString(),
+    patientId: '22334455-6',
+    edad: 65,
+    ubicacionCama: 'Sala 3B',
+  },
+  {
+    id: 'ns002_yesterday',
+    name: 'Pedro Vargas (NQ Ayer)',
+    diagnosis: 'Cefalea Tensional',
+    attending: 'Dra. Ríos',
+    entryTimestamp: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString(),
+    patientId: '33445566-7',
+    edad: 40,
+    ubicacionCama: 'Observación',
+  }
+];
+
+const initialShiftNovelties: ShiftNovelty[] = [
+  {
+    id: 'nv001',
+    time: format(new Date(), 'HH:mm'),
+    text: 'Falla de equipo de Rayos X en Pabellón 2 (Ejemplo Hoy).',
+    reportedBy: 'Téc. Paramed. J.Perez',
     entryTimestamp: new Date().toISOString(),
   },
-];
-
-const initialNonSurgicalPatientsData: NonSurgicalPatient[] = [
   {
-    id: 'ns_today_001',
-    name: 'Carmen Gloria Soto',
-    diagnosis: 'Neumonía Adquirida en la Comunidad (NAC) leve',
-    attending: 'Dr. Benjamín Herrera',
-    entryTimestamp: new Date(new Date().setHours(10, 0, 0, 0)).toISOString(),
-    patientId: '11.222.333-4',
-    edad: 72,
-    ubicacionCama: 'Sala Común 301A',
-    tratamiento: 'Amoxicilina oral, hidratación, control de saturación.',
-    comentarios: 'Paciente afebril, SatO2 95% AA.',
-  },
-  {
-    id: 'ns_today_002',
-    name: 'Luis Alberto Jiménez',
-    diagnosis: 'Descompensación Diabética tipo 2',
-    attending: 'Dra. Carolina Vilches',
-    entryTimestamp: new Date(new Date().setHours(13, 15, 0, 0)).toISOString(),
-    patientId: '9.888.777-K',
-    edad: 60,
-    ubicacionCama: 'Observación Urgencias',
-    tratamiento: 'Insulina SC según esquema, suero fisiológico, control HGT seriado.',
-    comentarios: 'Paciente refiere transgresión alimentaria. HGT 350 mg/dL al ingreso.',
-  },
-  {
-    id: 'ns_today_003',
-    name: 'Patricia Andrea Muñoz',
-    diagnosis: 'Crisis de Pánico con Hiperventilación',
-    attending: 'Dr. Felipe Contreras (Residente)',
-    entryTimestamp: new Date(new Date().setHours(16, 45, 0, 0)).toISOString(),
-    patientId: '18.765.432-1',
-    edad: 35,
-    ubicacionCama: 'Box Urgencia 5',
-    tratamiento: 'Técnicas de respiración, contención verbal. Se administra Diazepam 5mg SL.',
-    comentarios: 'Antecedentes de trastorno de ansiedad. Niega otra sintomatología.',
-  },
-  // Example for yesterday
-   {
-    id: 'ns_yesterday_001',
-    name: 'Paciente No Qx Ayer',
-    diagnosis: 'Cefalea Tensional',
-    attending: 'Dr. Guardia',
-    entryTimestamp: new Date(new Date(new Date().setDate(new Date().getDate() -1)).setHours(10,0,0,0)).toISOString(),
-    patientId: 'NS-YEST-01',
-    edad: 40,
-    ubicacionCama: 'Box 3 Urgencia',
-  },
-];
-
-const initialShiftNoveltiesData: ShiftNovelty[] = [
-  {
-    id: 'nv_today_001',
-    time: format(new Date(new Date().setHours(11, 15, 0, 0)), 'HH:mm'),
-    text: 'Se informa retraso en llegada de material de osteosíntesis para paciente de Traumatología. Posible reprogramación de cirugía de tobillo (Javier Torres) para más tarde.',
-    reportedBy: 'Enf. Supervisora Ana López',
-    entryTimestamp: new Date(new Date().setHours(11, 15, 0, 0)).toISOString(),
-  },
-  {
-    id: 'nv_yesterday_001',
+    id: 'nv002_yesterday',
     time: '18:30',
-    text: 'Pabellón Q1 estuvo no disponible por 1 hora debido a falla eléctrica menor. Solucionado.',
-    reportedBy: 'Téc. Mantenimiento J.P.',
-    entryTimestamp: new Date(new Date(new Date().setDate(new Date().getDate() -1)).setHours(18,30,0,0)).toISOString(),
-  },
+    text: 'Retraso en llegada de anestesista (Ejemplo Ayer).',
+    reportedBy: 'Enf. Supervisora L. Soto',
+    entryTimestamp: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString(),
+  }
 ];
-// --- End Descriptive Initial Dummy Data ---
+// --- End Initial Example Data ---
 
 
 interface DraggableItemData {
   id: string;
-  originalSectionId: 'operados' | 'no-quirurgicos' | 'pendientes' | 'novedades';
+  originalSectionId: 'operados' | 'no-quirurgicos' | 'pendientes' | 'novedades'; // 'novedades' added for completeness but not used in D&D
   itemData: Surgery | NonSurgicalPatient | ShiftNovelty;
 }
 
@@ -293,10 +175,9 @@ const PatientCard = ({ surgery, onDragStart, onEdit, onDelete }: PatientCardProp
         </div>
       </CardHeader>
       <CardContent className="text-sm space-y-1">
-        <p><strong>Hora Programada:</strong> {surgery.time || 'N/A'}</p>
+        <p><strong>Hora Prog.:</strong> {surgery.time || 'N/A'}</p>
         <p><strong>Cirujano/Equipo:</strong> {surgery.surgeon || 'N/A'}</p>
         <p><strong>Pabellón/Sala:</strong> {surgery.operatingRoom || 'N/A'}</p>
-        <p><strong>Cama Actual:</strong> {surgery.ubicacionCama || 'N/A'}</p>
         <p><strong>Edad:</strong> {surgery.edad || 'N/A'}</p>
         <p><strong>Diag. Pre-Op:</strong> {surgery.diagnosticoPreOperatorio || 'N/A'}</p>
         {surgery.status === 'Completed' && <p><strong>Diag. Post-Op:</strong> {surgery.diagnosticoPostOperatorio || 'N/A'}</p>}
@@ -398,13 +279,13 @@ export default function DailyLog() {
         allSurgeries = JSON.parse(storedSurgeriesJSON);
       } else {
         console.log("Initializing MOCK_SURGERIES_STORAGE_KEY with example data.");
-        allSurgeries = initialSurgeriesData;
+        allSurgeries = initialSurgeries;
         localStorage.setItem(MOCK_SURGERIES_STORAGE_KEY, JSON.stringify(allSurgeries));
       }
       setTodaysSurgeries(allSurgeries.filter(surgery => surgery.date === currentDayString));
     } catch (error) {
       console.error("Error loading/initializing surgeries from localStorage:", error);
-      setTodaysSurgeries(initialSurgeriesData.filter(surgery => surgery.date === currentDayString));
+      setTodaysSurgeries(initialSurgeries.filter(surgery => surgery.date === currentDayString));
       toast({ title: "Error de Carga de Cirugías", description: "Mostrando datos de ejemplo para cirugías.", variant: "destructive" });
     }
 
@@ -417,13 +298,13 @@ export default function DailyLog() {
         allNonSurgical = JSON.parse(storedNonSurgicalJSON);
       } else {
         console.log("Initializing MOCK_NON_SURGICAL_STORAGE_KEY with example data.");
-        allNonSurgical = initialNonSurgicalPatientsData;
+        allNonSurgical = initialNonSurgicalPatients;
         localStorage.setItem(MOCK_NON_SURGICAL_STORAGE_KEY, JSON.stringify(allNonSurgical));
       }
       setNonSurgicalPatients(allNonSurgical.filter(p => p.entryTimestamp && isToday(parseISO(p.entryTimestamp))));
     } catch (error) {
       console.error("Error loading/initializing non-surgical patients from localStorage:", error);
-      setNonSurgicalPatients(initialNonSurgicalPatientsData.filter(p => p.entryTimestamp && isToday(parseISO(p.entryTimestamp))));
+      setNonSurgicalPatients(initialNonSurgicalPatients.filter(p => p.entryTimestamp && isToday(parseISO(p.entryTimestamp))));
       toast({ title: "Error de Carga No Quirúrgicos", description: "Mostrando datos de ejemplo para no quirúrgicos.", variant: "destructive" });
     }
 
@@ -436,16 +317,16 @@ export default function DailyLog() {
         allNovelties = JSON.parse(storedNoveltiesJSON);
       } else {
         console.log("Initializing MOCK_NOVELTIES_STORAGE_KEY with example data.");
-        allNovelties = initialShiftNoveltiesData;
+        allNovelties = initialShiftNovelties;
         localStorage.setItem(MOCK_NOVELTIES_STORAGE_KEY, JSON.stringify(allNovelties));
       }
       setShiftNovelties(allNovelties.filter(n => n.entryTimestamp && isToday(parseISO(n.entryTimestamp))));
     } catch (error) {
       console.error("Error loading/initializing shift novelties from localStorage:", error);
-      setShiftNovelties(initialShiftNoveltiesData.filter(n => n.entryTimestamp && isToday(parseISO(n.entryTimestamp))));
+      setShiftNovelties(initialShiftNovelties.filter(n => n.entryTimestamp && isToday(parseISO(n.entryTimestamp))));
       toast({ title: "Error de Carga de Novedades", description: "Mostrando datos de ejemplo para novedades.", variant: "destructive" });
     }
-  }, []);
+  }, []); // Empty dependency array to run only on mount
 
   const saveAllDataToLocalStorage = (
     updatedTodaysSurgeriesArg?: Surgery[],
@@ -509,12 +390,12 @@ export default function DailyLog() {
     if (editable) {
       toast({
         title: "Edición Permitida (Próximamente)",
-        description: `Este registro ${itemType} (ID: ${itemId}) ES editable. La funcionalidad completa de edición está pendiente.`,
+        description: `Este registro ${itemType} (ID: ${itemId}) ES editable (dentro de las 24h). La funcionalidad completa de edición está pendiente.`,
       });
     } else {
       toast({
         title: "Edición Bloqueada",
-        description: `Este registro ${itemType} (ID: ${itemId}) NO es editable (han pasado más de 24h, fecha inválida o faltante).`,
+        description: `Este registro ${itemType} (ID: ${itemId}) NO es editable (han pasado más de 24h desde su creación/última actualización, o fecha inválida/faltante).`,
         variant: "destructive",
       });
     }
@@ -596,16 +477,16 @@ export default function DailyLog() {
     let updateMade = false;
     let toastMessage = "";
 
-    if (originalSectionId === 'pendientes' && (rawItemData as Surgery).tipoIntervencion) {
+    if (originalSectionId === 'pendientes' && (rawItemData as Surgery).tipoIntervencion) { // Item is a Surgery from 'pendientes'
         const surgery = rawItemData as Surgery;
         if (targetSectionId === 'operados') {
             newTodaysSurgeries = newTodaysSurgeries.map(s => s.id === draggedItemId ? { ...s, status: 'Completed', entryTimestamp: newEntryTimestamp } : s);
             toastMessage = `Cirugía de ${surgery.patientName} movida a Pacientes Operados.`;
             updateMade = true;
         } else if (targetSectionId === 'no-quirurgicos') {
-            newTodaysSurgeries = newTodaysSurgeries.filter(s => s.id !== draggedItemId);
-            const newNonSurgical: NonSurgicalPatient = {
-                id: `ns-${surgery.id}`,
+            newTodaysSurgeries = newTodaysSurgeries.filter(s => s.id !== draggedItemId); // Remove from surgeries
+            const newNonSurgical: NonSurgicalPatient = { // Transform to NonSurgicalPatient
+                id: `ns-${surgery.id}`, // Create new ID
                 name: surgery.patientName,
                 patientId: surgery.patientId,
                 edad: surgery.edad,
@@ -613,7 +494,7 @@ export default function DailyLog() {
                 diagnosis: surgery.diagnosticoPreOperatorio || 'Diagnóstico no especificado',
                 attending: surgery.surgeon || 'Médico no especificado',
                 entryTimestamp: newEntryTimestamp,
-                tratamiento: surgery.tratamientoIndicado,
+                tratamiento: surgery.tratamientoIndicado, // Assuming these fields exist on Surgery or are okay as undefined
                 comentarios: surgery.comentariosAdicionales,
             };
             newNonSurgicalPatients.push(newNonSurgical);
@@ -621,34 +502,35 @@ export default function DailyLog() {
             updateMade = true;
         }
     }
-    else if (originalSectionId === 'operados' && (rawItemData as Surgery).tipoIntervencion) {
+    else if (originalSectionId === 'operados' && (rawItemData as Surgery).tipoIntervencion) { // Item is a Surgery from 'operados'
         if (targetSectionId === 'pendientes' || targetSectionId === 'no-quirurgicos') {
             toast({ title: "Acción no permitida", description: "Un paciente operado no puede volver a Pendientes o No Quirúrgicos mediante arrastre.", variant: "destructive" });
-            return;
+            return; // Block this move
         }
     }
-    else if (originalSectionId === 'no-quirurgicos' && !(rawItemData as Surgery).tipoIntervencion) {
+    else if (originalSectionId === 'no-quirurgicos' && !(rawItemData as Surgery).tipoIntervencion) { // Item is a NonSurgicalPatient
         const nonSurgical = rawItemData as NonSurgicalPatient;
         if (targetSectionId === 'pendientes' || targetSectionId === 'operados') {
-            newNonSurgicalPatients = newNonSurgicalPatients.filter(p => p.id !== draggedItemId);
-            const newSurgery: Surgery = {
-                id: `s-${nonSurgical.id}`,
+            newNonSurgicalPatients = newNonSurgicalPatients.filter(p => p.id !== draggedItemId); // Remove from non-surgical
+            const newSurgery: Surgery = { // Transform to Surgery
+                id: `s-${nonSurgical.id}`, // Create new ID
                 patientName: nonSurgical.name,
                 patientId: nonSurgical.patientId,
                 edad: nonSurgical.edad,
                 ubicacionCama: nonSurgical.ubicacionCama,
                 procedureType: targetSectionId === 'pendientes' ? 'Procedimiento por definir' : 'Procedimiento realizado (traslado NQ)',
-                tipoIntervencion: 'procedimiento',
+                tipoIntervencion: 'procedimiento', // Default to procedimiento
                 status: targetSectionId === 'pendientes' ? 'Scheduled' : 'Completed',
                 date: format(new Date(), 'yyyy-MM-dd'),
-                time: format(new Date(), 'HH:mm'),
+                time: format(new Date(), 'HH:mm'), // Current time as placeholder
                 diagnosticoPreOperatorio: nonSurgical.diagnosis,
-                diagnosticoPostOperatorio: targetSectionId === 'operados' ? nonSurgical.diagnosis : undefined,
+                diagnosticoPostOperatorio: targetSectionId === 'operados' ? nonSurgical.diagnosis : undefined, // If moved to operated, copy diagnosis
                 tratamientoIndicado: nonSurgical.tratamiento,
                 comentariosAdicionales: nonSurgical.comentarios,
                 entryTimestamp: newEntryTimestamp,
-                surgeon: nonSurgical.attending,
-                operatingRoom: nonSurgical.ubicacionCama
+                // Fields like surgeon, operatingRoom might need to be placeholders or derived
+                surgeon: nonSurgical.attending, // Use attending physician as surgeon placeholder
+                operatingRoom: nonSurgical.ubicacionCama // Or a default OR
             };
             newTodaysSurgeries.push(newSurgery);
             toastMessage = `Paciente ${nonSurgical.name} movido de No Quirúrgicos a ${targetSectionId === 'pendientes' ? 'Pendientes por Operar' : 'Pacientes Operados'}.`;
@@ -660,7 +542,7 @@ export default function DailyLog() {
     if (updateMade) {
       saveAllDataToLocalStorage(newTodaysSurgeries, newNonSurgicalPatients, shiftNovelties);
       toast({ title: "Actualización Exitosa", description: toastMessage });
-    } else if (originalSectionId !== targetSectionId) {
+    } else if (originalSectionId !== targetSectionId) { // If no specific update was made but sections were different
        toast({ title: "Movimiento no válido", description: "Esta transición no está permitida o no se pudo identificar el tipo de ítem.", variant: "default" });
     }
   };
@@ -668,8 +550,8 @@ export default function DailyLog() {
 
   const scheduledSurgeries = todaysSurgeries.filter(s => s.status === 'Scheduled');
   const completedSurgeries = todaysSurgeries.filter(s => s.status === 'Completed');
-  const todayNonSurgicalPatients = nonSurgicalPatients;
-  const todayShiftNovelties = shiftNovelties;
+  const todayNonSurgicalPatients = nonSurgicalPatients; // Already filtered by isToday in useEffect
+  const todayShiftNovelties = shiftNovelties; // Already filtered by isToday in useEffect
 
   const accordionSections = [
     {
@@ -679,7 +561,7 @@ export default function DailyLog() {
       data: completedSurgeries,
       renderItem: (item: Surgery) => <PatientCard key={item.id} surgery={item} onDragStart={handleDragStart} onEdit={(id, ts) => handleEdit(id, "la cirugía completada", ts)} onDelete={(id) => openDeleteConfirmation(id, 'surgery')} />,
       emptyText: "No hay pacientes registrados como operados hoy.",
-      droppable: true,
+      droppable: true, // Can drop here (e.g., from 'pendientes')
       navigationPath: '/cirugias/registrar/procedimiento'
     },
     {
@@ -689,7 +571,7 @@ export default function DailyLog() {
       data: todayNonSurgicalPatients,
       renderItem: (item: NonSurgicalPatient) => <NonSurgicalPatientCard key={item.id} patient={item} onDragStart={handleDragStart} onEdit={(id, ts) => handleEdit(id, "el paciente no quirúrgico", ts)} onDelete={(id) => openDeleteConfirmation(id, 'non-surgical')} />,
       emptyText: "No hay pacientes no quirúrgicos registrados hoy.",
-      droppable: true,
+      droppable: true, // Can drop here (e.g., from 'pendientes')
       navigationPath: '/cirugias/registrar/no-quirurgico'
     },
     {
@@ -699,7 +581,7 @@ export default function DailyLog() {
       data: scheduledSurgeries,
       renderItem: (item: Surgery) => <PatientCard key={item.id} surgery={item} onDragStart={handleDragStart} onEdit={(id, ts) => handleEdit(id, "la cirugía pendiente", ts)} onDelete={(id) => openDeleteConfirmation(id, 'surgery')} />,
       emptyText: "No hay cirugías pendientes programadas para hoy.",
-      droppable: true,
+      droppable: true, // Can drop here (e.g., from 'no-quirurgicos')
       navigationPath: '/cirugias/registrar/procedimiento' // Or '/cirugias/registrar/pendiente' if specific form for pending
     },
     {
@@ -709,7 +591,7 @@ export default function DailyLog() {
       data: todayShiftNovelties,
       renderItem: (item: ShiftNovelty) => <NoveltyCard key={item.id} novelty={item} onEdit={(id, ts) => handleEdit(id, "la novedad", ts)} onDelete={(id) => openDeleteConfirmation(id, 'novelty')} />,
       emptyText: "No hay novedades registradas para el turno de hoy.",
-      droppable: false,
+      droppable: false, // Cannot drop items into 'Novedades'
       navigationPath: '/cirugias/registrar/novedades-turno'
     },
   ];
@@ -794,6 +676,4 @@ export default function DailyLog() {
     </>
   );
 }
-    
-
     
