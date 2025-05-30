@@ -1,98 +1,105 @@
 
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, ListChecks, UserPlus, CalendarClock, History, ListPlus as ListPlusIcon } from 'lucide-react'; // Renamed ListPlus to avoid conflict
-import { APP_NAME } from '@/lib/constants';
+import { Edit2, BookOpen, Settings2, ListPlus, FilePlus2, BedDouble, FileClock, ClipboardEdit, ArrowRight } from 'lucide-react';
+import OnCallSurgeonsDisplay from '@/components/dashboard/on-call-surgeons';
+import { APP_HEADER_TITLE } from '@/lib/constants';
 
-const dashboardFeatures = [
+const registrationActions = [
   {
-    title: 'Registro de Atenciones',
-    description: 'Añade un nuevo registro de atención seleccionando el tipo.',
-    href: '/cirugias/registrar',
-    icon: ListPlusIcon, // Use the renamed import
-    cta: 'Registrar Atención',
+    title: 'Cirugía o Procedimiento',
+    href: '/cirugias/registrar/procedimiento',
+    icon: FilePlus2,
   },
   {
-    title: 'Registro Diario',
-    description: 'Consulta la lista detallada de cirugías y procedimientos para hoy.',
-    href: '/agenda/hoy',
-    icon: ListChecks,
-    cta: 'Ver Registro Diario',
+    title: 'Ingreso Paciente No Quirúrgico',
+    href: '/cirugias/registrar/no-quirurgico',
+    icon: BedDouble,
   },
   {
-    title: 'Calendario de Turnos',
-    description: 'Visualiza y coordina los turnos de los cirujanos.',
-    href: '/turnos',
-    icon: CalendarClock,
-    cta: 'Ver Calendario de Turnos',
+    title: 'Cirugía o Procedimiento Pendiente',
+    href: '/cirugias/registrar/pendiente',
+    icon: FileClock,
   },
   {
-    title: 'Registro Histórico',
-    description: 'Consulta y descarga el historial de atenciones pasadas.',
-    href: '/historial',
-    icon: History,
-    cta: 'Ver Historial',
+    title: 'Novedades del Turno',
+    href: '/cirugias/registrar/novedades-turno',
+    icon: ClipboardEdit,
   },
+];
+
+const logbookActions = [
+  { title: 'Hoja Diaria', href: '/agenda/hoy' },
+  { title: 'Histórico', href: '/historial' },
+];
+
+const shiftManagementActions = [
+  { title: 'Calendario de Turnos', href: '/turnos' },
+  { title: 'Solicitud de Permisos', href: '/turnos/solicitar-permiso' },
 ];
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-8">
-      <div className="text-center md:text-left">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-          Bienvenido a {APP_NAME}
+    <div className="container mx-auto max-w-lg py-6 px-4 space-y-8">
+      <header className="text-center py-4">
+        <h1 className="text-4xl font-bold text-primary tracking-tight">
+          {APP_HEADER_TITLE}
         </h1>
-        <p className="mt-2 text-lg text-muted-foreground">
-          Tu centro de mando para gestionar emergencias y agendas quirúrgicas.
-        </p>
-      </div>
+      </header>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {dashboardFeatures.map((feature) => (
-          <Card key={feature.title} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <feature.icon className="h-8 w-8 text-primary" />
-                <CardTitle className="text-xl font-semibold tracking-tight">{feature.title}</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <CardDescription>{feature.description}</CardDescription>
-            </CardContent>
-            <div className="p-6 pt-0 mt-auto">
-              <Link href={feature.href} passHref>
-                <Button className="w-full h-11 text-base">
-                  {feature.cta}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </Card>
-        ))}
-      </div>
-      
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle>Estadísticas Rápidas (Placeholder)</CardTitle>
-          <CardDescription>Resumen de las actividades de hoy.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 bg-secondary/10 rounded-lg text-center">
-            <p className="text-3xl font-bold text-primary">5</p>
-            <p className="text-sm text-muted-foreground">Cirugías Hoy</p>
-          </div>
-           <div className="p-4 bg-secondary/10 rounded-lg text-center">
-            <p className="text-3xl font-bold text-primary">2</p>
-            <p className="text-sm text-muted-foreground">Quirófanos Disponibles</p>
-          </div>
-           <div className="p-4 bg-secondary/10 rounded-lg text-center">
-            <p className="text-3xl font-bold text-primary">8</p>
-            <p className="text-sm text-muted-foreground">Procedimientos Pendientes</p>
-          </div>
-        </CardContent>
-      </Card>
+      <OnCallSurgeonsDisplay />
 
+      <section className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <Edit2 className="h-6 w-6 text-primary" />
+          <h2 className="text-xl font-semibold text-primary">REGISTRAR</h2>
+        </div>
+        <div className="space-y-3">
+          {registrationActions.map((action) => (
+            <Link key={action.title} href={action.href} passHref>
+              <Button variant="default" className="w-full h-12 text-base justify-start px-4 shadow-md hover:bg-primary/90">
+                <action.icon className="mr-3 h-5 w-5" />
+                {action.title}
+              </Button>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <BookOpen className="h-6 w-6 text-primary" />
+          <h2 className="text-xl font-semibold text-primary">LIBRO</h2>
+        </div>
+        <div className="space-y-3">
+          {logbookActions.map((action) => (
+            <Link key={action.title} href={action.href} passHref>
+              <Button variant="secondary" className="w-full h-12 text-base shadow-md hover:bg-secondary/90">
+                {action.title}
+              </Button>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <Settings2 className="h-6 w-6 text-primary" />
+          <h2 className="text-xl font-semibold text-primary">GESTIÓN DE TURNOS</h2>
+        </div>
+        <div className="space-y-3">
+          {shiftManagementActions.map((action) => (
+            <Link key={action.title} href={action.href} passHref>
+              <Button variant="secondary" className="w-full h-12 text-base shadow-md hover:bg-secondary/90">
+                {action.title}
+              </Button>
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
