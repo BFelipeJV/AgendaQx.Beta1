@@ -1,20 +1,10 @@
+
 import LoginForm from '@/components/auth/login-form';
-import { LogoIcon } from '@/components/icons/logo';
-import { APP_NAME } from '@/lib/constants';
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <LogoIcon className="mx-auto h-16 w-16 text-primary" />
-          <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-foreground">
-            Bienvenido a {APP_NAME}
-          </h1>
-          <p className="mt-2 text-lg text-muted-foreground">
-            Inicia sesión para gestionar las agendas quirúrgicas.
-          </p>
-        </div>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 p-4"> {/* Slightly lighter background */}
+      <div className="w-full max-w-xs sm:max-w-sm"> {/* Adjusted max-width for a more compact form */}
         <LoginForm />
       </div>
     </div>

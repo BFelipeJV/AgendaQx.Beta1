@@ -16,25 +16,27 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { useRouter } from 'next/navigation'; 
+import { Card, CardContent, CardHeader, CardDescription, CardFooter } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { useState, type FormEvent } from 'react'; 
-import { LogIn } from 'lucide-react';
-
+import { useState, type FormEvent } from 'react';
+import { LogIn, Eye, EyeOff } from 'lucide-react';
+import { APP_HEADER_TITLE } from '@/lib/constants'; // Using the constant for "AGENDA QX"
 
 const loginSchema = z.object({
-  email: z.string().email({ message: 'Dirección de correo electrónico inválida.' }),
-  password: z.string().min(6, { message: 'La contraseña debe tener al menos 6 caracteres.' }),
+  email: z.string().email({ message: 'Dirección de correo electrónico inválida.' }), // Still expecting email for logic
+  password: z.string().min(1, { message: 'La contraseña es obligatoria.' }), // Min 1 for simplicity in example
+  rememberMe: z.boolean().optional(),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-// Define a type for the stored user for clarity (should match UserRegistrationForm's StoredUser if defined there)
 interface StoredUser {
   nombreCompleto: string;
   email: string;
-  password: string; // In a real app, this would be a hashed password
+  password: string;
   rol: 'cirujano' | 'administrador';
 }
 
@@ -44,83 +46,82 @@ export default function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: '',
       password: '',
+      rememberMe: false,
     },
   });
 
   async function onSubmit(values: LoginFormValues) {
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
-    
-    let loggedIn = false;
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // --- Simulation: Check localStorage for the user ---
-    // THIS IS NOT SECURE FOR PRODUCTION. For demonstration purposes only.
+    let loggedIn = false;
+    let userName = '';
+
     try {
       const storedUsersJSON = localStorage.getItem(MOCK_USERS_STORAGE_KEY);
       const storedUsers: StoredUser[] = storedUsersJSON ? JSON.parse(storedUsersJSON) : [];
       
       const foundUser = storedUsers.find(
-        user => user.email === values.email && user.password === values.password
+        user => user.email.toLowerCase() === values.email.toLowerCase() && user.password === values.password
       );
 
       if (foundUser) {
         loggedIn = true;
-        toast({
-          title: 'Inicio de Sesión Exitoso',
-          description: `Bienvenido, ${foundUser.nombreCompleto}. Redirigiendo al panel principal...`,
-        });
-        router.push('/dashboard');
+        userName = foundUser.nombreCompleto;
       }
     } catch (error) {
       console.error("Error reading users from localStorage:", error);
-      // Proceed to fallback or error
     }
-    // --- End Simulation ---
 
-    // Fallback to hardcoded admin if not logged in via localStorage
-    if (!loggedIn && values.email === "admin@example.com" && values.password === "password") {
+    if (!loggedIn && values.email.toLowerCase() === "admin@example.com" && values.password === "password") {
       loggedIn = true;
-      toast({
-        title: 'Inicio de Sesión Exitoso (Admin)',
-        description: 'Redirigiendo al panel principal...',
-      });
-      router.push('/dashboard');
+      userName = "Administrador";
     }
     
-    if (!loggedIn) {
+    if (loggedIn) {
+      toast({
+        title: 'Inicio de Sesión Exitoso',
+        description: `Bienvenido, ${userName}. Redirigiendo...`,
+      });
+      router.push('/dashboard');
+    } else {
       toast({
         title: 'Inicio de Sesión Fallido',
-        description: 'Correo electrónico o contraseña inválidos.',
+        description: 'Usuario o contraseña inválidos.',
         variant: 'destructive',
       });
       setIsLoading(false);
     }
-    // If loggedIn is true, navigation already happened, so no need to setIsLoading(false) here for the success case.
   }
   
   return (
-    <Card className="w-full shadow-xl">
-      <CardHeader>
-        <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
-        <CardDescription>Ingresa tus credenciales para acceder a tu cuenta.</CardDescription>
-      </CardHeader>
+    <Card className="w-full shadow-xl overflow-hidden">
+      <div className="bg-primary text-primary-foreground py-6 px-6 text-center">
+        <h1 className="text-3xl font-bold tracking-tight">{APP_HEADER_TITLE}</h1>
+      </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-0">
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 pt-6">
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Correo Electrónico</FormLabel>
+                  <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Usuario</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="nombre@ejemplo.com" {...field} disabled={isLoading} />
+                    <Input 
+                      placeholder="su.correo@ejemplo.com" 
+                      {...field} 
+                      disabled={isLoading}
+                      className="h-11 border-primary/30 focus:border-primary"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -131,26 +132,62 @@ export default function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Contraseña</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} disabled={isLoading} />
-                  </FormControl>
+                  <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Contraseña</FormLabel>
+                  <div className="relative">
+                    <FormControl>
+                      <Input 
+                        type={showPassword ? 'text' : 'password'} 
+                        placeholder="••••••••" 
+                        {...field} 
+                        disabled={isLoading}
+                        className="h-11 pr-10 border-primary/30 focus:border-primary"
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 px-0 text-muted-foreground hover:text-primary"
+                      onClick={() => setShowPassword(!showPassword)}
+                      disabled={isLoading}
+                      aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
+             <div className="flex items-center justify-between mt-2">
+                <Link href="#" className="text-xs text-primary hover:underline">
+                  Recupera tu contraseña
+                </Link>
+             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full h-12 text-lg" disabled={isLoading}>
-              <LogIn className="mr-2 h-5 w-5" />
-              {isLoading ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
+          <CardFooter className="flex flex-col gap-4 px-6 pb-6">
+            <FormField
+              control={form.control}
+              name="rememberMe"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-2 space-y-0 w-full justify-start mb-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isLoading}
+                      id="remember-me"
+                    />
+                  </FormControl>
+                  <Label htmlFor="remember-me" className="text-xs font-normal text-muted-foreground cursor-pointer">
+                    Recordar tu usuario y contraseña
+                  </Label>
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full h-11 text-base font-semibold" disabled={isLoading}>
+              {isLoading ? 'INGRESANDO...' : 'ENTRAR'}
             </Button>
-            <p className="text-sm text-center text-muted-foreground">
-              ¿No tienes una cuenta?{' '}
-              <Link href="#" className="font-medium text-primary hover:underline">
-                Contactar Soporte
-              </Link>
-            </p>
           </CardFooter>
         </form>
       </Form>
