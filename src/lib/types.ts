@@ -40,12 +40,13 @@ export interface Surgery {
 
 export interface NavItem {
   title: string;
-  href: string;
+  href?: string; // Optional if it's a group header
   iconName?: IconName; 
   disabled?: boolean;
   external?: boolean;
   label?: string;
   description?: string;
+  subItems?: NavItem[]; // For nested/collapsible items
 }
 
 export interface StoredUser {
@@ -88,4 +89,3 @@ export interface ShiftNovelty {
   entryTimestamp: string; // ISO string
   // date could be implicitly today for DailyLog, or stored if novelties can be for other days
 }
-

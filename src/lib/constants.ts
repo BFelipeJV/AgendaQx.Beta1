@@ -1,66 +1,87 @@
 
-import type { NavItem, IconName } from '@/lib/types';
+import type { NavItem } from '@/lib/types';
 
 export const NAV_ITEMS_MAIN: NavItem[] = [
   {
     title: 'Panel Principal',
     href: '/dashboard',
     iconName: 'LayoutDashboard',
-    description: 'Resumen y acciones rápidas agrupadas.',
+    description: 'Resumen y acciones rápidas.',
   },
   {
-    title: 'Registrar Cirugía/Procedimiento',
-    href: '/cirugias/registrar/procedimiento',
-    iconName: 'FilePlus2',
-    description: 'Registrar una nueva intervención quirúrgica o procedimiento.',
+    title: 'Registrar',
+    iconName: 'Edit2', // Using a general edit icon for the group
+    description: 'Añadir nuevos registros al sistema.',
+    subItems: [
+      {
+        title: 'Cirugía o Procedimiento',
+        href: '/cirugias/registrar/procedimiento',
+        iconName: 'FilePlus2',
+        description: 'Registrar una nueva intervención quirúrgica o procedimiento.',
+      },
+      {
+        title: 'Ingreso No Quirúrgico',
+        href: '/cirugias/registrar/no-quirurgico',
+        iconName: 'BedDouble',
+        description: 'Registrar el ingreso de un paciente que no requiere cirugía.',
+      },
+      {
+        title: 'Procedimiento Pendiente',
+        href: '/cirugias/registrar/pendiente',
+        iconName: 'FileClock',
+        description: 'Registrar o actualizar información de un procedimiento pendiente.',
+      },
+      {
+        title: 'Novedades del Turno',
+        href: '/cirugias/registrar/novedades-turno',
+        iconName: 'ClipboardEdit',
+        description: 'Anotar novedades relevantes ocurridas durante el turno.',
+      },
+    ],
   },
   {
-    title: 'Registrar Ingreso No Quirúrgico',
-    href: '/cirugias/registrar/no-quirurgico',
-    iconName: 'BedDouble',
-    description: 'Registrar el ingreso de un paciente que no requiere cirugía.',
+    title: 'Libro',
+    iconName: 'BookOpen', // General book icon for the group
+    description: 'Consultar registros diarios e históricos.',
+    subItems: [
+      {
+        title: 'Hoja Diaria',
+        href: '/agenda/hoy',
+        iconName: 'ListChecks', 
+        description: 'Resumen de actividades y estado de pacientes para hoy.',
+      },
+      {
+        title: 'Registro Histórico',
+        href: '/historial',
+        iconName: 'History',
+        description: 'Consultar y descargar el historial de atenciones pasadas.',
+      },
+    ],
   },
   {
-    title: 'Registrar Procedimiento Pendiente',
-    href: '/cirugias/registrar/pendiente',
-    iconName: 'FileClock',
-    description: 'Registrar o actualizar información de un procedimiento pendiente.',
-  },
-  {
-    title: 'Registrar Novedades del Turno',
-    href: '/cirugias/registrar/novedades-turno',
-    iconName: 'ClipboardEdit',
-    description: 'Anotar novedades relevantes ocurridas durante el turno.',
-  },
-  {
-    title: 'Hoja Diaria',
-    href: '/agenda/hoy',
-    iconName: 'ListChecks', 
-    description: 'Resumen de actividades y estado de pacientes para hoy.',
-  },
-  {
-    title: 'Registro Histórico',
-    href: '/historial',
-    iconName: 'History',
-    description: 'Consultar y descargar el historial de atenciones pasadas.',
-  },
-  {
-    title: 'Calendario de Turnos',
-    href: '/turnos',
-    iconName: 'CalendarClock',
-    description: 'Gestionar y visualizar los turnos de los cirujanos.',
-  },
-  {
-    title: 'Solicitar Permiso',
-    href: '/turnos/solicitar-permiso',
-    iconName: 'FilePenLine',
-    description: 'Gestionar solicitudes de permisos o cambios de turno.',
+    title: 'Gestión de Turnos',
+    iconName: 'Settings2', // General settings/management icon
+    description: 'Gestionar calendario de turnos y solicitudes.',
+    subItems: [
+      {
+        title: 'Calendario de Turnos',
+        href: '/turnos',
+        iconName: 'CalendarClock',
+        description: 'Gestionar y visualizar los turnos de los cirujanos.',
+      },
+      {
+        title: 'Solicitar Permiso',
+        href: '/turnos/solicitar-permiso',
+        iconName: 'FilePenLine',
+        description: 'Gestionar solicitudes de permisos o cambios de turno.',
+      },
+    ]
   },
   {
     title: 'Registrar Usuarios',
     href: '/admin/registrar-usuarios',
     iconName: 'UserPlus',
-    description: 'Crear nuevas cuentas de usuario para la plataforma.',
+    description: 'Crear nuevas cuentas de usuario para la plataforma (Admin).',
   },
 ];
 
