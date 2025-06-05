@@ -2,7 +2,6 @@
 'use client';
 
 import type { StoredUser } from '@/lib/types';
-import { MOCK_USERS_STORAGE_KEY } from '@/lib/constants';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Edit3, Trash2, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getUsers, deleteUser as apiDeleteUser } from '@/lib/api';
 
 export default function UserManagementTable() {
   const [users, setUsers] = useState<StoredUser[]>([]);
@@ -36,23 +36,18 @@ export default function UserManagementTable() {
 
   useEffect(() => {
     setIsLoading(true);
-    try {
-      const storedUsersJSON = localStorage.getItem(MOCK_USERS_STORAGE_KEY);
-      if (storedUsersJSON) {
-        setUsers(JSON.parse(storedUsersJSON));
-      } else {
+    getUsers()
+      .then(setUsers)
+      .catch(error => {
+        console.error('Error loading users:', error);
+        toast({
+          title: 'Error de Carga',
+          description: 'No se pudieron cargar los usuarios.',
+          variant: 'destructive',
+        });
         setUsers([]);
-      }
-    } catch (error) {
-      console.error("Error loading users from localStorage:", error);
-      toast({
-        title: "Error de Carga",
-        description: "No se pudieron cargar los usuarios desde el almacenamiento local.",
-        variant: "destructive",
-      });
-      setUsers([]);
-    }
-    setIsLoading(false);
+      })
+      .finally(() => setIsLoading(false));
   }, [toast]);
 
   const handleEditUser = (email: string) => {
@@ -71,25 +66,26 @@ export default function UserManagementTable() {
   const confirmDeleteUser = () => {
     if (!userToDelete) return;
 
-    try {
-      const updatedUsers = users.filter(user => user.email !== userToDelete.email);
-      localStorage.setItem(MOCK_USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
-      setUsers(updatedUsers);
-      toast({
-        title: "Usuario Eliminado",
-        description: `El usuario ${userToDelete.nombreCompleto} ha sido eliminado exitosamente.`,
+    apiDeleteUser(userToDelete.email)
+      .then(() => {
+        setUsers(users.filter(u => u.email !== userToDelete.email));
+        toast({
+          title: 'Usuario Eliminado',
+          description: `El usuario ${userToDelete.nombreCompleto} ha sido eliminado exitosamente.`,
+        });
+      })
+      .catch(error => {
+        console.error('Error deleting user:', error);
+        toast({
+          title: 'Error al Eliminar',
+          description: 'No se pudo eliminar el usuario.',
+          variant: 'destructive',
+        });
+      })
+      .finally(() => {
+        setIsDeleteDialogOpen(false);
+        setUserToDelete(null);
       });
-    } catch (error) {
-      console.error("Error deleting user from localStorage:", error);
-      toast({
-        title: "Error al Eliminar",
-        description: "No se pudo eliminar el usuario.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleteDialogOpen(false);
-      setUserToDelete(null);
-    }
   };
 
   if (isLoading) {
