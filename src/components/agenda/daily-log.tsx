@@ -1,8 +1,8 @@
 
 'use client';
 
-import type { Surgery, NonSurgicalPatient, ShiftNovelty } from '@/lib/types';
-import { MOCK_SURGERIES_STORAGE_KEY, MOCK_NON_SURGICAL_STORAGE_KEY, MOCK_NOVELTIES_STORAGE_KEY } from '@/lib/constants';
+import type { Surgery, NonSurgicalPatient, ShiftNovelty, ShiftClosure, ShiftAssignment } from '@/lib/types';
+import { MOCK_SURGERIES_STORAGE_KEY, MOCK_NON_SURGICAL_STORAGE_KEY, MOCK_NOVELTIES_STORAGE_KEY, SHIFT_ASSIGNMENTS_STORAGE_KEY, CURRENT_USER_SESSION_KEY, SHIFT_CLOSURES_STORAGE_KEY } from '@/lib/constants';
 import {
   Accordion,
   AccordionContent,
@@ -14,10 +14,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, CheckCircle, Clock, UserCog, FileText, Edit3, XCircle, AlertTriangle, Trash2, BriefcaseMedical, Bed, ClipboardList } from 'lucide-react'; // Added new icons
 import { cn } from '@/lib/utils';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useImperativeHandle } from 'react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { differenceInHours, parseISO, isValid, isToday, format } from 'date-fns';
+import { differenceInHours, parseISO, isValid, isToday, format, isSameDay } from 'date-fns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -256,12 +256,19 @@ const NoveltyCard = ({ novelty, onEdit, onDelete }: NoveltyCardProps) => (
 );
 
 
-export default function DailyLog() {
+export interface DailyLogRef {
+  endShift: () => void;
+}
+
+const DailyLog = React.forwardRef<DailyLogRef>((_props, ref) => {
   const { toast } = useToast();
   const [todaysSurgeries, setTodaysSurgeries] = useState<Surgery[]>([]);
   const [nonSurgicalPatients, setNonSurgicalPatients] = useState<NonSurgicalPatient[]>([]);
   const [shiftNovelties, setShiftNovelties] = useState<ShiftNovelty[]>([]);
   const [draggingOver, setDraggingOver] = useState<string | null>(null);
+
+  const [shiftClosed, setShiftClosed] = useState(false);
+  const [closureInfo, setClosureInfo] = useState<ShiftClosure | null>(null);
 
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ id: string; type: 'surgery' | 'non-surgical' | 'novelty' } | null>(null);
@@ -327,6 +334,36 @@ export default function DailyLog() {
       toast({ title: "Error de Carga de Novedades", description: "Mostrando datos de ejemplo para novedades.", variant: "destructive" });
     }
   }, []); // Empty dependency array to run only on mount
+
+  useEffect(() => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    try {
+      const stored = localStorage.getItem(SHIFT_CLOSURES_STORAGE_KEY);
+      if (stored) {
+        const closures: ShiftClosure[] = JSON.parse(stored);
+        const todayClosure = closures.find(c => c.date === todayStr);
+        if (todayClosure) {
+          setShiftClosed(true);
+          setClosureInfo(todayClosure);
+        }
+      }
+    } catch (e) { console.error('Error loading shift closures:', e); }
+  }, []);
+
+  useEffect(() => {
+    if (shiftClosed) return;
+    const checkAuto = () => {
+      const now = new Date();
+      const autoTime = new Date();
+      autoTime.setHours(10, 0, 0, 0);
+      if (now >= autoTime) {
+        handleEndShift();
+      }
+    };
+    checkAuto();
+    const interval = setInterval(checkAuto, 60000);
+    return () => clearInterval(interval);
+  }, [shiftClosed, todaysSurgeries, nonSurgicalPatients, shiftNovelties]);
 
   const saveAllDataToLocalStorage = (
     updatedTodaysSurgeriesArg?: Surgery[],
@@ -441,6 +478,52 @@ export default function DailyLog() {
     setItemToDelete(null);
   };
 
+  const handleEndShift = () => {
+    const currentDayStr = format(new Date(), 'yyyy-MM-dd');
+    const closedAt = new Date().toISOString();
+
+    let onCallSurgeons: string[] = [];
+    try {
+      const assignmentsJson = localStorage.getItem(SHIFT_ASSIGNMENTS_STORAGE_KEY);
+      if (assignmentsJson) {
+        const assignments: ShiftAssignment[] = JSON.parse(assignmentsJson).map((a: any) => ({ ...a, date: parseISO(a.date) }));
+        const todayAssign = assignments.find(a => isSameDay(a.date, new Date()));
+        if (todayAssign) onCallSurgeons = todayAssign.assignedPersonnel.map(p => p.surgeonName);
+      }
+    } catch (e) { console.error('Error loading shift assignments:', e); }
+
+    let closedBy = 'Desconocido';
+    try {
+      const userJson = localStorage.getItem(CURRENT_USER_SESSION_KEY);
+      if (userJson) { closedBy = JSON.parse(userJson).nombreCompleto; }
+    } catch (e) { console.error('Error loading current user:', e); }
+
+    const closure: ShiftClosure = {
+      id: closedAt,
+      date: currentDayStr,
+      closedAt,
+      onCallSurgeons,
+      closedBy,
+      surgeries: todaysSurgeries,
+      nonSurgical: nonSurgicalPatients,
+      novelties: shiftNovelties,
+    };
+
+    try {
+      const stored = localStorage.getItem(SHIFT_CLOSURES_STORAGE_KEY);
+      const closures: ShiftClosure[] = stored ? JSON.parse(stored) : [];
+      closures.push(closure);
+      localStorage.setItem(SHIFT_CLOSURES_STORAGE_KEY, JSON.stringify(closures));
+    } catch (e) { console.error('Error saving closure:', e); }
+
+    const remainingSurgeries = todaysSurgeries.filter(s => s.status === 'Scheduled');
+    saveAllDataToLocalStorage(remainingSurgeries, [], []);
+
+    setShiftClosed(true);
+    setClosureInfo(closure);
+    toast({ title: 'Turno Finalizado', description: `Cerrado a las ${format(parseISO(closedAt), 'HH:mm')}` });
+  };
+
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, itemData: DraggableItemData) => {
     e.dataTransfer.setData('application/json', JSON.stringify(itemData));
@@ -547,13 +630,26 @@ export default function DailyLog() {
     }
   };
 
+  useImperativeHandle(ref, () => ({ endShift: handleEndShift }));
+
 
   const scheduledSurgeries = todaysSurgeries.filter(s => s.status === 'Scheduled');
   const completedSurgeries = todaysSurgeries.filter(s => s.status === 'Completed');
-  const todayNonSurgicalPatients = nonSurgicalPatients; // Already filtered by isToday in useEffect
-  const todayShiftNovelties = shiftNovelties; // Already filtered by isToday in useEffect
+  const todayNonSurgicalPatients = nonSurgicalPatients; // Already filtered
+  const todayShiftNovelties = shiftNovelties; // Already filtered
 
-  const accordionSections = [
+  const accordionSections = shiftClosed ? [
+    {
+      id: 'pendientes',
+      title: 'Pendientes por Operar',
+      icon: ClipboardList,
+      data: scheduledSurgeries,
+      renderItem: (item: Surgery) => <PatientCard key={item.id} surgery={item} onDragStart={handleDragStart} onEdit={(id, ts) => handleEdit(id, "la cirugía pendiente", ts)} onDelete={(id) => openDeleteConfirmation(id, 'surgery')} />,
+      emptyText: "No hay cirugías pendientes programadas para hoy.",
+      droppable: true,
+      navigationPath: '/cirugias/registrar/procedimiento'
+    },
+  ] : [
     {
       id: 'operados',
       title: 'Pacientes Operados',
@@ -616,7 +712,12 @@ export default function DailyLog() {
 
   return (
     <>
-      <Accordion type="multiple" className="w-full space-y-4" defaultValue={['pendientes', 'operados', 'no-quirurgicos', 'novedades']}>
+      {shiftClosed && closureInfo && (
+        <div className="mb-4 text-sm font-semibold text-primary">
+          Turno cerrado por {closureInfo.closedBy} a las {format(parseISO(closureInfo.closedAt), 'HH:mm')}
+        </div>
+      )}
+      <Accordion type="multiple" className="w-full space-y-4" defaultValue={shiftClosed ? ['pendientes'] : ['pendientes', 'operados', 'no-quirurgicos', 'novedades']}>
         {accordionSections.map((section) => (
           <AccordionItem value={section.id} key={section.id} className="border rounded-lg shadow-md bg-card overflow-hidden">
             <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50 transition-colors group">
@@ -675,5 +776,7 @@ export default function DailyLog() {
       </AlertDialog>
     </>
   );
-}
+});
+
+export default DailyLog;
     

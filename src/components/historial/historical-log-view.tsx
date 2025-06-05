@@ -25,8 +25,8 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import type { Surgery, NonSurgicalPatient, ShiftNovelty } from '@/lib/types';
-import { MOCK_SURGERIES_STORAGE_KEY, MOCK_NON_SURGICAL_STORAGE_KEY, MOCK_NOVELTIES_STORAGE_KEY } from '@/lib/constants';
+import type { Surgery, NonSurgicalPatient, ShiftNovelty, ShiftClosure } from '@/lib/types';
+import { MOCK_SURGERIES_STORAGE_KEY, MOCK_NON_SURGICAL_STORAGE_KEY, MOCK_NOVELTIES_STORAGE_KEY, SHIFT_CLOSURES_STORAGE_KEY } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
 export default function HistoricalLogView() {
@@ -37,6 +37,7 @@ export default function HistoricalLogView() {
   const [allSurgeries, setAllSurgeries] = useState<Surgery[]>([]);
   const [allNonSurgical, setAllNonSurgical] = useState<NonSurgicalPatient[]>([]);
   const [allNovelties, setAllNovelties] = useState<ShiftNovelty[]>([]);
+  const [allClosures, setAllClosures] = useState<ShiftClosure[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -51,6 +52,9 @@ export default function HistoricalLogView() {
 
       const storedNovelties = localStorage.getItem(MOCK_NOVELTIES_STORAGE_KEY);
       setAllNovelties(storedNovelties ? JSON.parse(storedNovelties) : []);
+
+      const storedClosures = localStorage.getItem(SHIFT_CLOSURES_STORAGE_KEY);
+      setAllClosures(storedClosures ? JSON.parse(storedClosures) : []);
     } catch (error) {
       console.error("Error loading data from localStorage:", error);
       toast({
@@ -92,6 +96,16 @@ export default function HistoricalLogView() {
     });
   }, [allNovelties, startDate, endDate]);
 
+  const filteredClosures = useMemo(() => {
+    if (!startDate || !endDate) return [];
+    return allClosures.filter(c => {
+      try {
+        const date = parseISO(c.date);
+        return isWithinInterval(date, { start: startOfDay(startDate), end: endOfDay(endDate) });
+      } catch (e) { return false; }
+    });
+  }, [allClosures, startDate, endDate]);
+
   const handleDownloadPdf = () => {
     toast({
       title: 'Descarga PDF (Próximamente)',
@@ -99,7 +113,7 @@ export default function HistoricalLogView() {
     });
   };
   
-  const noDataInRange = !isLoading && startDate && endDate && filteredSurgeries.length === 0 && filteredNonSurgical.length === 0 && filteredNovelties.length === 0;
+  const noDataInRange = !isLoading && startDate && endDate && filteredSurgeries.length === 0 && filteredNonSurgical.length === 0 && filteredNovelties.length === 0 && filteredClosures.length === 0;
 
   return (
     <div className="space-y-6">
@@ -262,7 +276,34 @@ export default function HistoricalLogView() {
                     </TableRow>
                   ))}
                 </TableBody>
-                <TableCaption>Total de novedades en el rango: {filteredNovelties.length}</TableCaption>
+              <TableCaption>Total de novedades en el rango: {filteredNovelties.length}</TableCaption>
+              </Table>
+            </div>
+          )}
+
+          {filteredClosures.length > 0 && (
+            <div className="space-y-2 pt-6">
+              <h3 className="text-xl font-semibold text-primary">Cierres de Turno</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead>Hora Cierre</TableHead>
+                    <TableHead>Cerrado Por</TableHead>
+                    <TableHead>Cirujanos de Turno</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredClosures.map(c => (
+                    <TableRow key={c.id}>
+                      <TableCell>{format(parseISO(c.date), 'dd/MM/yyyy', { locale: es })}</TableCell>
+                      <TableCell>{format(parseISO(c.closedAt), 'HH:mm')}</TableCell>
+                      <TableCell>{c.closedBy}</TableCell>
+                      <TableCell className="whitespace-pre-wrap">{c.onCallSurgeons.join(' - ')}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableCaption>Total de cierres en el rango: {filteredClosures.length}</TableCaption>
               </Table>
             </div>
           )}
