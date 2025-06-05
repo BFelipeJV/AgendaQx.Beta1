@@ -1,13 +1,15 @@
 
 'use client';
 
-import DailyLog from '@/components/agenda/daily-log';
+import DailyLog, { DailyLogRef } from '@/components/agenda/daily-log';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpenCheck } from 'lucide-react'; // Changed icon
-import { useState, useEffect } from 'react'; 
+import { Button } from '@/components/ui/button';
+import { BookOpenCheck } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function DailyLogPage() {
   const [todayString, setTodayString] = useState('');
+  const dailyLogRef = useRef<DailyLogRef>(null);
 
   useEffect(() => {
     setTodayString(new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
@@ -25,9 +27,12 @@ export default function DailyLogPage() {
               {todayString ? `Resumen de actividades para ${todayString}.` : 'Cargando fecha...'}
             </CardDescription>
           </div>
+          <Button variant="outline" size="sm" className="ml-auto" onClick={() => dailyLogRef.current?.endShift()}>
+            Terminar Turno
+          </Button>
         </CardHeader>
         <CardContent>
-          <DailyLog />
+          <DailyLog ref={dailyLogRef} />
         </CardContent>
       </Card>
     </div>

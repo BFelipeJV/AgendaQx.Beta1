@@ -90,3 +90,14 @@ export interface ShiftNovelty {
   entryTimestamp: string; // ISO string
   // date could be implicitly today for DailyLog, or stored if novelties can be for other days
 }
+
+export interface ShiftClosure {
+  id: string;
+  date: string; // YYYY-MM-DD of the shift
+  closedAt: string; // ISO timestamp when shift was closed
+  onCallSurgeons: string[];
+  closedBy: string;
+  surgeries: Surgery[];
+  nonSurgical: NonSurgicalPatient[];
+  novelties: ShiftNovelty[];
+}

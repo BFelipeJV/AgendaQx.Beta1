@@ -117,4 +117,5 @@ export const MOCK_SURGERIES_STORAGE_KEY = 'mockRegisteredSurgeries';
 export const MOCK_NON_SURGICAL_STORAGE_KEY = 'mockRegisteredNonSurgical';
 export const MOCK_NOVELTIES_STORAGE_KEY = 'mockRegisteredNovelties';
 export const SHIFT_ASSIGNMENTS_STORAGE_KEY = 'mockShiftAssignments';
+export const SHIFT_CLOSURES_STORAGE_KEY = 'mockShiftClosures';
 export const CURRENT_USER_SESSION_KEY = 'currentUserSession';
