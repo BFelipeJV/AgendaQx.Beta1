@@ -19,6 +19,8 @@ import { CheckCircle, Hourglass } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 const nonSurgicalSchema = z.object({
   nombrePaciente: z.string().min(2, { message: 'El nombre del paciente debe tener al menos 2 caracteres.' }),
   edad: z.coerce.number({ invalid_type_error: 'La edad debe ser un número.' }).int().positive({ message: 'La edad debe ser un número positivo.' }).min(0, { message: 'La edad no puede ser negativa.' }),
@@ -48,7 +50,7 @@ export default function NonSurgicalRegistrationForm() {
 
   async function onSubmit(values: NonSurgicalFormValues) {
     setIsSubmitting(true);
-    console.log('Datos de Registro No Quirúrgico:', values);
+    if (isDev) console.log('Datos de Registro No Quirúrgico:', values);
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     toast({
