@@ -22,6 +22,8 @@ import { useState } from 'react';
 import type { Surgery } from '@/lib/types';
 import { MOCK_SURGERIES_STORAGE_KEY } from '@/lib/constants';
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 const surgeryRegistrationSchema = z.object({
   tipoIntervencion: z.enum(['cirugia', 'procedimiento'], {
     required_error: 'Debe seleccionar el tipo de intervención.',
@@ -87,7 +89,7 @@ export default function SurgeryRegistrationForm() {
       operatingRoom: values.ubicacionCama, // Or a more specific parsing
     };
 
-    console.log('Datos de Registro Quirúrgico a Guardar:', newSurgery);
+    if (isDev) console.log('Datos de Registro Quirúrgico a Guardar:', newSurgery);
 
     try {
       const existingSurgeriesJSON = localStorage.getItem(MOCK_SURGERIES_STORAGE_KEY);

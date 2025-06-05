@@ -19,6 +19,8 @@ import { CheckCircle, Hourglass, User, CalendarDays } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 const shiftNoveltySchema = z.object({
   comentarioNovedad: z.string().min(1, { message: 'El comentario o novedad es obligatorio.' }).max(2000, {message: 'El comentario no puede exceder los 2000 caracteres.'}),
 });
@@ -54,7 +56,7 @@ export default function ShiftNoveltiesForm() {
       fechaHora: new Date().toISOString(), // Actual submission timestamp
       cirujano: surgeonName,
     }
-    console.log('Datos de Novedad del Turno:', submissionData);
+    if (isDev) console.log('Datos de Novedad del Turno:', submissionData);
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     toast({

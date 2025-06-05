@@ -25,6 +25,8 @@ import { CheckCircle, Hourglass, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 const userRegistrationSchema = z.object({
   nombreCompleto: z.string().min(3, { message: 'El nombre completo debe tener al menos 3 caracteres.' }),
   email: z.string().email({ message: 'Dirección de correo electrónico inválida.' }),
@@ -55,7 +57,7 @@ export default function UserRegistrationForm() {
 
   async function onSubmit(values: UserRegistrationFormValues) {
     setIsSubmitting(true);
-    console.log('Datos de Registro de Usuario:', values);
+    if (isDev) console.log('Datos de Registro de Usuario:', values);
 
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
