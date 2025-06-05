@@ -27,6 +27,8 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 interface AssignShiftPersonnelDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -65,7 +67,7 @@ export default function AssignShiftPersonnelDialog({
     // It uses a deep copy of currentAssignments to prevent direct mutation
     // and to ensure local state is distinct from parent state until saved.
     if (isOpen && selectedDate) {
-      console.log('Dialog Effect: Initializing/Resetting personnel for date:', selectedDate.toISOString(), 'with currentAssignments:', currentAssignments);
+      if (isDev) console.log('Dialog Effect: Initializing/Resetting personnel for date:', selectedDate.toISOString(), 'with currentAssignments:', currentAssignments);
       setPersonnel(JSON.parse(JSON.stringify(currentAssignments)));
       setSelectedSurgeonId('');
       setSelectedRole('');
@@ -93,17 +95,17 @@ export default function AssignShiftPersonnelDialog({
   };
 
   const handleRemovePersonnel = (surgeonIdToRemove: string) => {
-    console.log('handleRemovePersonnel called for surgeonId:', surgeonIdToRemove);
-    console.log('Personnel state BEFORE removal:', personnel);
+    if (isDev) console.log('handleRemovePersonnel called for surgeonId:', surgeonIdToRemove);
+    if (isDev) console.log('Personnel state BEFORE removal:', personnel);
     setPersonnel(prevPersonnel => {
       const updatedPersonnel = prevPersonnel.filter(p => p.surgeonId !== surgeonIdToRemove);
-      console.log('Personnel state AFTER removal (updatedPersonnel):', updatedPersonnel);
+      if (isDev) console.log('Personnel state AFTER removal (updatedPersonnel):', updatedPersonnel);
       return updatedPersonnel;
     });
   };
 
   const handleSaveChanges = () => {
-    console.log('Saving changes with personnel:', personnel);
+    if (isDev) console.log('Saving changes with personnel:', personnel);
     onSave(personnel);
   };
 
@@ -185,7 +187,7 @@ export default function AssignShiftPersonnelDialog({
                         variant="ghost" 
                         size="icon" 
                         onClick={() => {
-                          console.log(`Delete button clicked for surgeonId: ${p.surgeonId}`);
+                          if (isDev) console.log(`Delete button clicked for surgeonId: ${p.surgeonId}`);
                           handleRemovePersonnel(p.surgeonId);
                         }} 
                         className="text-destructive hover:text-destructive/80 h-8 w-8"

@@ -18,6 +18,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInHours, parseISO, isValid, isToday, format } from 'date-fns';
+
+const isDev = process.env.NODE_ENV !== 'production';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -275,10 +277,10 @@ export default function DailyLog() {
       let allSurgeries: Surgery[];
       const storedSurgeriesJSON = localStorage.getItem(MOCK_SURGERIES_STORAGE_KEY);
       if (storedSurgeriesJSON && storedSurgeriesJSON !== 'null' && storedSurgeriesJSON !== 'undefined') {
-        console.log("Loading surgeries from localStorage");
+        if (isDev) console.log("Loading surgeries from localStorage");
         allSurgeries = JSON.parse(storedSurgeriesJSON);
       } else {
-        console.log("Initializing MOCK_SURGERIES_STORAGE_KEY with example data.");
+        if (isDev) console.log("Initializing MOCK_SURGERIES_STORAGE_KEY with example data.");
         allSurgeries = initialSurgeries;
         localStorage.setItem(MOCK_SURGERIES_STORAGE_KEY, JSON.stringify(allSurgeries));
       }
@@ -294,10 +296,10 @@ export default function DailyLog() {
       let allNonSurgical: NonSurgicalPatient[];
       const storedNonSurgicalJSON = localStorage.getItem(MOCK_NON_SURGICAL_STORAGE_KEY);
       if (storedNonSurgicalJSON && storedNonSurgicalJSON !== 'null' && storedNonSurgicalJSON !== 'undefined') {
-         console.log("Loading non-surgical from localStorage");
+         if (isDev) console.log("Loading non-surgical from localStorage");
         allNonSurgical = JSON.parse(storedNonSurgicalJSON);
       } else {
-        console.log("Initializing MOCK_NON_SURGICAL_STORAGE_KEY with example data.");
+        if (isDev) console.log("Initializing MOCK_NON_SURGICAL_STORAGE_KEY with example data.");
         allNonSurgical = initialNonSurgicalPatients;
         localStorage.setItem(MOCK_NON_SURGICAL_STORAGE_KEY, JSON.stringify(allNonSurgical));
       }
@@ -313,10 +315,10 @@ export default function DailyLog() {
       let allNovelties: ShiftNovelty[];
       const storedNoveltiesJSON = localStorage.getItem(MOCK_NOVELTIES_STORAGE_KEY);
       if (storedNoveltiesJSON && storedNoveltiesJSON !== 'null' && storedNoveltiesJSON !== 'undefined') {
-        console.log("Loading novelties from localStorage");
+        if (isDev) console.log("Loading novelties from localStorage");
         allNovelties = JSON.parse(storedNoveltiesJSON);
       } else {
-        console.log("Initializing MOCK_NOVELTIES_STORAGE_KEY with example data.");
+        if (isDev) console.log("Initializing MOCK_NOVELTIES_STORAGE_KEY with example data.");
         allNovelties = initialShiftNovelties;
         localStorage.setItem(MOCK_NOVELTIES_STORAGE_KEY, JSON.stringify(allNovelties));
       }
@@ -368,7 +370,7 @@ export default function DailyLog() {
 
 
   const isEditable = (entryTimestamp?: string): boolean => {
-    console.log("[isEditable] Checking timestamp:", entryTimestamp);
+    if (isDev) console.log("[isEditable] Checking timestamp:", entryTimestamp);
     if (!entryTimestamp) {
       console.warn("[isEditable] entryTimestamp is missing. Defaulting to not editable.");
       return false;
@@ -380,13 +382,13 @@ export default function DailyLog() {
     }
     const hoursDifference = differenceInHours(new Date(), entryDate);
     const editable = hoursDifference <= 24;
-    console.log(`[isEditable] Entry TS: ${entryTimestamp}, Parsed Entry Date: ${entryDate.toISOString()}, Now: ${new Date().toISOString()}, Diff (hours): ${hoursDifference}, Editable: ${editable}`);
+    if (isDev) console.log(`[isEditable] Entry TS: ${entryTimestamp}, Parsed Entry Date: ${entryDate.toISOString()}, Now: ${new Date().toISOString()}, Diff (hours): ${hoursDifference}, Editable: ${editable}`);
     return editable;
   };
 
   const handleEdit = (itemId: string, itemType: string, entryTimestamp: string | undefined) => {
     const editable = isEditable(entryTimestamp);
-    console.log(`[handleEdit] Attempting to edit ${itemType} ID: ${itemId} with timestamp: ${entryTimestamp}, Editable: ${editable}`);
+    if (isDev) console.log(`[handleEdit] Attempting to edit ${itemType} ID: ${itemId} with timestamp: ${entryTimestamp}, Editable: ${editable}`);
     if (editable) {
       toast({
         title: "Edición Permitida (Próximamente)",
@@ -408,7 +410,7 @@ export default function DailyLog() {
 
   const handleConfirmDelete = () => {
     if (!itemToDelete) return;
-    console.log("[handleConfirmDelete] Deleting item:", itemToDelete);
+    if (isDev) console.log("[handleConfirmDelete] Deleting item:", itemToDelete);
 
     let updatedSurgeries = [...todaysSurgeries];
     let updatedNonSurgical = [...nonSurgicalPatients];
@@ -418,15 +420,15 @@ export default function DailyLog() {
     if (itemToDelete.type === 'surgery') {
       updatedSurgeries = todaysSurgeries.filter(s => s.id !== itemToDelete.id);
       itemFoundAndRemoved = updatedSurgeries.length < todaysSurgeries.length;
-      console.log(`[handleConfirmDelete] Surgeries after delete attempt (found: ${itemFoundAndRemoved}):`, updatedSurgeries);
+      if (isDev) console.log(`[handleConfirmDelete] Surgeries after delete attempt (found: ${itemFoundAndRemoved}):`, updatedSurgeries);
     } else if (itemToDelete.type === 'non-surgical') {
       updatedNonSurgical = nonSurgicalPatients.filter(p => p.id !== itemToDelete.id);
       itemFoundAndRemoved = updatedNonSurgical.length < nonSurgicalPatients.length;
-      console.log(`[handleConfirmDelete] Non-surgical after delete attempt (found: ${itemFoundAndRemoved}):`, updatedNonSurgical);
+      if (isDev) console.log(`[handleConfirmDelete] Non-surgical after delete attempt (found: ${itemFoundAndRemoved}):`, updatedNonSurgical);
     } else if (itemToDelete.type === 'novelty') {
       updatedNovelties = shiftNovelties.filter(n => n.id !== itemToDelete.id);
       itemFoundAndRemoved = updatedNovelties.length < shiftNovelties.length;
-      console.log(`[handleConfirmDelete] Novelties after delete attempt (found: ${itemFoundAndRemoved}):`, updatedNovelties);
+      if (isDev) console.log(`[handleConfirmDelete] Novelties after delete attempt (found: ${itemFoundAndRemoved}):`, updatedNovelties);
     }
 
     if (itemFoundAndRemoved) {
