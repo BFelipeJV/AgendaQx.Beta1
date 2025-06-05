@@ -135,7 +135,7 @@ const PatientCard = ({ surgery, onDragStart, onEdit, onDelete }: PatientCardProp
   switch (surgery.status) {
     case 'Scheduled':
       statusIcon = <Clock className="mr-2 h-4 w-4 text-blue-500" />;
-      statusText = 'Programada';
+      statusText = 'Pendiente';
       statusColorClass = 'border-blue-500';
       break;
     case 'Completed':
