@@ -23,6 +23,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 // Templates for shift types based on day of the week or specific labels
 // Day mapping: 0 for Sunday, 1 for Monday, ..., 6 for Saturday
 const shiftTemplates: Record<string, Omit<ShiftAssignment, 'id' | 'date' | 'assignedPersonnel'>> = {
@@ -144,38 +146,38 @@ export default function ShiftCalendarPage() {
   };
 
   const handlePrepareDeleteShift = () => {
-    console.log("[DEBUG] handlePrepareDeleteShift called. Selected Date:", selectedCalendarDate);
+    if (isDev) console.log("[DEBUG] handlePrepareDeleteShift called. Selected Date:", selectedCalendarDate);
     if (!selectedCalendarDate) {
       toast({ title: "Error", description: "Por favor, seleccione una fecha primero.", variant: "destructive" });
       return;
     }
     const assignmentToDelete = shiftAssignments.find(sa => isSameDay(sa.date, selectedCalendarDate));
-    console.log("[DEBUG] Found assignment to delete in handlePrepareDeleteShift:", assignmentToDelete);
+    if (isDev) console.log("[DEBUG] Found assignment to delete in handlePrepareDeleteShift:", assignmentToDelete);
     if (assignmentToDelete && assignmentToDelete.assignedPersonnel.length > 0) {
       setShiftToDelete(assignmentToDelete);
       setIsDeleteDialogOpen(true);
-      console.log("[DEBUG] Set shiftToDelete and opening delete dialog.");
+      if (isDev) console.log("[DEBUG] Set shiftToDelete and opening delete dialog.");
     } else if (assignmentToDelete) {
        toast({ title: "Información", description: "Este turno no tiene personal asignado para eliminar.", variant: "default" });
-       console.log("[DEBUG] Shift has no personnel, not deleting.");
+       if (isDev) console.log("[DEBUG] Shift has no personnel, not deleting.");
     } else {
       toast({ title: "Información", description: "No hay un turno asignado específico para esta fecha.", variant: "default" });
-      console.log("[DEBUG] No specific assignment for this date.");
+      if (isDev) console.log("[DEBUG] No specific assignment for this date.");
     }
   };
 
   const handleConfirmDeleteShift = () => {
-    console.log("[DEBUG] handleConfirmDeleteShift called. shiftToDelete:", shiftToDelete);
+    if (isDev) console.log("[DEBUG] handleConfirmDeleteShift called. shiftToDelete:", shiftToDelete);
     if (!shiftToDelete) {
       console.error("[DEBUG] shiftToDelete is null, cannot delete.");
       return;
     }
 
     setShiftAssignments(prevAssignments => {
-      console.log("[DEBUG] Current assignments before delete:", prevAssignments);
+      if (isDev) console.log("[DEBUG] Current assignments before delete:", prevAssignments);
       const newAssignments = prevAssignments.filter(sa => sa.id !== shiftToDelete.id);
-      console.log("[DEBUG] Assignments after filter (should be one less):", newAssignments);
-      console.log(`[DEBUG] Filtering based on id: ${shiftToDelete.id}`);
+      if (isDev) console.log("[DEBUG] Assignments after filter (should be one less):", newAssignments);
+      if (isDev) console.log(`[DEBUG] Filtering based on id: ${shiftToDelete.id}`);
       
       if (newAssignments.length === prevAssignments.length && prevAssignments.some(sa => sa.id === shiftToDelete.id)) {
         console.warn("[DEBUG] Filter did not remove any assignments. Check ID matching or object references.");
@@ -184,7 +186,7 @@ export default function ShiftCalendarPage() {
       try {
         localStorage.setItem(SHIFT_ASSIGNMENTS_STORAGE_KEY, JSON.stringify(newAssignments.map(sa => ({...sa, date: sa.date.toISOString()}))));
         toast({ title: "Turno Eliminado", description: `La asignación de personal para ${format(shiftToDelete.date, 'PPP', { locale: es})} ha sido eliminada.` });
-        console.log("[DEBUG] Successfully updated localStorage and toasted.");
+        if (isDev) console.log("[DEBUG] Successfully updated localStorage and toasted.");
       } catch (error) {
         console.error("[DEBUG] Error deleting shift assignment from localStorage:", error);
         toast({ title: "Error de Eliminación", description: "No se pudo eliminar la asignación del turno de localStorage.", variant: "destructive"});
@@ -194,11 +196,11 @@ export default function ShiftCalendarPage() {
     
     setIsDeleteDialogOpen(false);
     setShiftToDelete(null);
-    console.log("[DEBUG] Closed delete dialog and reset shiftToDelete.");
+    if (isDev) console.log("[DEBUG] Closed delete dialog and reset shiftToDelete.");
 
     if (editingShiftAssignment && shiftToDelete && editingShiftAssignment.id === shiftToDelete.id) {
         setEditingShiftAssignment(undefined);
-        console.log("[DEBUG] Cleared editingShiftAssignment.");
+        if (isDev) console.log("[DEBUG] Cleared editingShiftAssignment.");
     }
   };
 
