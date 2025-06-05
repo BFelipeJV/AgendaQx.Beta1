@@ -8,7 +8,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyCrPIEEpT1Y9TkH5HUtUrLzviTMmQi3D6w",
   authDomain: "surgiq-g9hlq.firebaseapp.com",
   projectId: "surgiq-g9hlq",
-  storageBucket: "surgiq-g9hlq.firebasestorage.app",
+  storageBucket: "surgiq-g9hlq.appspot.com",
   messagingSenderId: "638130076656",
   appId: "1:638130076656:web:78d36b7ddb5ec5166f3b35"
 };
