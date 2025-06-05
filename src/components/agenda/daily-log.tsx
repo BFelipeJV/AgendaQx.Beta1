@@ -3,6 +3,7 @@
 
 import type { Surgery, NonSurgicalPatient, ShiftNovelty } from '@/lib/types';
 import { MOCK_SURGERIES_STORAGE_KEY, MOCK_NON_SURGICAL_STORAGE_KEY, MOCK_NOVELTIES_STORAGE_KEY } from '@/lib/constants';
+import { getSurgeries, createSurgery } from '@/lib/api';
 import {
   Accordion,
   AccordionContent,
@@ -271,23 +272,15 @@ export default function DailyLog() {
     const currentDayString = format(new Date(), 'yyyy-MM-dd');
 
     // Load Surgeries
-    try {
-      let allSurgeries: Surgery[];
-      const storedSurgeriesJSON = localStorage.getItem(MOCK_SURGERIES_STORAGE_KEY);
-      if (storedSurgeriesJSON && storedSurgeriesJSON !== 'null' && storedSurgeriesJSON !== 'undefined') {
-        console.log("Loading surgeries from localStorage");
-        allSurgeries = JSON.parse(storedSurgeriesJSON);
-      } else {
-        console.log("Initializing MOCK_SURGERIES_STORAGE_KEY with example data.");
-        allSurgeries = initialSurgeries;
-        localStorage.setItem(MOCK_SURGERIES_STORAGE_KEY, JSON.stringify(allSurgeries));
-      }
-      setTodaysSurgeries(allSurgeries.filter(surgery => surgery.date === currentDayString));
-    } catch (error) {
-      console.error("Error loading/initializing surgeries from localStorage:", error);
-      setTodaysSurgeries(initialSurgeries.filter(surgery => surgery.date === currentDayString));
-      toast({ title: "Error de Carga de Cirugías", description: "Mostrando datos de ejemplo para cirugías.", variant: "destructive" });
-    }
+    getSurgeries()
+      .then(allSurgeries => {
+        setTodaysSurgeries(allSurgeries.filter(surgery => surgery.date === currentDayString));
+      })
+      .catch(error => {
+        console.error('Error loading surgeries:', error);
+        setTodaysSurgeries(initialSurgeries.filter(surgery => surgery.date === currentDayString));
+        toast({ title: 'Error de Carga de Cirugías', description: 'Mostrando datos de ejemplo para cirugías.', variant: 'destructive' });
+      });
 
     // Load Non-Surgical Patients
     try {
@@ -328,7 +321,7 @@ export default function DailyLog() {
     }
   }, []); // Empty dependency array to run only on mount
 
-  const saveAllDataToLocalStorage = (
+  const saveAllDataToLocalStorage = async (
     updatedTodaysSurgeriesArg?: Surgery[],
     updatedNonSurgicalPatientsArg?: NonSurgicalPatient[],
     updatedShiftNoveltiesArg?: ShiftNovelty[]
@@ -338,10 +331,7 @@ export default function DailyLog() {
 
       // Surgeries
       const surgeriesToSave = updatedTodaysSurgeriesArg ?? todaysSurgeries;
-      const allStoredSurgeries: Surgery[] = JSON.parse(localStorage.getItem(MOCK_SURGERIES_STORAGE_KEY) || '[]')
-                                           .filter((s: Surgery) => s.date !== currentDayStr); // Keep non-today's surgeries
-      const newAllSurgeries = [...allStoredSurgeries, ...surgeriesToSave];
-      localStorage.setItem(MOCK_SURGERIES_STORAGE_KEY, JSON.stringify(newAllSurgeries));
+      await Promise.all(surgeriesToSave.map(s => createSurgery(s)));
       if(updatedTodaysSurgeriesArg) setTodaysSurgeries(updatedTodaysSurgeriesArg);
 
       // Non-Surgical Patients
@@ -406,7 +396,7 @@ export default function DailyLog() {
     setDeleteAlertOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
     console.log("[handleConfirmDelete] Deleting item:", itemToDelete);
 
@@ -430,7 +420,7 @@ export default function DailyLog() {
     }
 
     if (itemFoundAndRemoved) {
-      saveAllDataToLocalStorage(updatedSurgeries, updatedNonSurgical, updatedNovelties);
+      await saveAllDataToLocalStorage(updatedSurgeries, updatedNonSurgical, updatedNovelties);
       toast({ title: "Registro Eliminado", description: `El registro ha sido eliminado exitosamente.` });
     } else {
       console.error("[handleConfirmDelete] Item not found for deletion:", itemToDelete);
@@ -457,7 +447,7 @@ export default function DailyLog() {
     setDraggingOver(null);
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetSectionId: 'operados' | 'no-quirurgicos' | 'pendientes') => {
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>, targetSectionId: 'operados' | 'no-quirurgicos' | 'pendientes') => {
     e.preventDefault();
     setDraggingOver(null);
     const draggedItemJSON = e.dataTransfer.getData('application/json');
@@ -540,7 +530,7 @@ export default function DailyLog() {
 
 
     if (updateMade) {
-      saveAllDataToLocalStorage(newTodaysSurgeries, newNonSurgicalPatients, shiftNovelties);
+      await saveAllDataToLocalStorage(newTodaysSurgeries, newNonSurgicalPatients, shiftNovelties);
       toast({ title: "Actualización Exitosa", description: toastMessage });
     } else if (originalSectionId !== targetSectionId) { // If no specific update was made but sections were different
        toast({ title: "Movimiento no válido", description: "Esta transición no está permitida o no se pudo identificar el tipo de ítem.", variant: "default" });
