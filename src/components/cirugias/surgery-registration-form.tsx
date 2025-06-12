@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle, Hourglass } from 'lucide-react';
+import { CheckCircle, Hourglass, Loader2, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import type { Surgery } from '@/lib/types';
@@ -36,6 +35,7 @@ const surgeryRegistrationSchema = z.object({
   diagnosticoPostoperatorio: z.string().min(1, { message: 'El diagnóstico post-operatorio es obligatorio.' }),
   tratamiento: z.string().optional(), // This is 'tratamientoIndicado'
   comentariosAdicionales: z.string().optional(),
+  status: z.literal('Completed'),
 });
 
 type SurgeryRegistrationFormValues = z.infer<typeof surgeryRegistrationSchema>;
@@ -58,6 +58,7 @@ export default function SurgeryRegistrationForm() {
       diagnosticoPostoperatorio: '',
       tratamiento: '',
       comentariosAdicionales: '',
+      status: 'Completed',
     },
   });
 
@@ -295,19 +296,21 @@ export default function SurgeryRegistrationForm() {
           )}
         />
 
-        <Button type="submit" className="w-full h-12 text-lg" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <Hourglass className="mr-2 h-5 w-5 animate-spin" />
-              Registrando...
-            </>
-          ) : (
-            <>
-             <CheckCircle className="mr-2 h-5 w-5" />
-             Registrar
-            </>
-          )}
-        </Button>
+        <div className="flex justify-end gap-4">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Guardando...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Guardar Cirugía
+              </>
+            )}
+          </Button>
+        </div>
       </form>
     </Form>
   );

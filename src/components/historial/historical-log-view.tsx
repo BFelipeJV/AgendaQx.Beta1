@@ -1,10 +1,9 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar as CalendarIcon, Download, Search } from 'lucide-react';
+import { Calendar as CalendarIcon, Download, Search, Clock } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -28,69 +27,60 @@ import { useToast } from '@/hooks/use-toast';
 import type { Surgery, NonSurgicalPatient, ShiftNovelty } from '@/lib/types';
 import { MOCK_SURGERIES_STORAGE_KEY, MOCK_NON_SURGICAL_STORAGE_KEY, MOCK_NOVELTIES_STORAGE_KEY } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+
+interface ShiftRecord {
+  date: string;
+  time: string;
+  closingSurgeon: string;
+  surgeries: Surgery[];
+  nonSurgicalPatients: NonSurgicalPatient[];
+  shiftNovelties: ShiftNovelty[];
+}
 
 export default function HistoricalLogView() {
   const { toast } = useToast();
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(new Date()); // Default to today
-
-  const [allSurgeries, setAllSurgeries] = useState<Surgery[]>([]);
-  const [allNonSurgical, setAllNonSurgical] = useState<NonSurgicalPatient[]>([]);
-  const [allNovelties, setAllNovelties] = useState<ShiftNovelty[]>([]);
-
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
+  const [shiftRecords, setShiftRecords] = useState<ShiftRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setIsLoading(true);
     try {
-      const storedSurgeries = localStorage.getItem(MOCK_SURGERIES_STORAGE_KEY);
-      setAllSurgeries(storedSurgeries ? JSON.parse(storedSurgeries) : []);
-
-      const storedNonSurgical = localStorage.getItem(MOCK_NON_SURGICAL_STORAGE_KEY);
-      setAllNonSurgical(storedNonSurgical ? JSON.parse(storedNonSurgical) : []);
-
-      const storedNovelties = localStorage.getItem(MOCK_NOVELTIES_STORAGE_KEY);
-      setAllNovelties(storedNovelties ? JSON.parse(storedNovelties) : []);
+      const storedShifts = localStorage.getItem('shift_history');
+      console.log('Stored shifts:', storedShifts); // Debug log
+      if (storedShifts) {
+        const parsedShifts = JSON.parse(storedShifts);
+        console.log('Parsed shifts:', parsedShifts); // Debug log
+        setShiftRecords(parsedShifts);
+      } else {
+        console.log('No shifts found in localStorage'); // Debug log
+        setShiftRecords([]);
+      }
     } catch (error) {
-      console.error("Error loading data from localStorage:", error);
+      console.error("Error loading shift history:", error);
       toast({
         title: "Error de Carga",
-        description: "No se pudieron cargar los datos históricos desde el almacenamiento local.",
+        description: "No se pudieron cargar los registros históricos.",
         variant: "destructive",
       });
     }
     setIsLoading(false);
   }, [toast]);
 
-  const filteredSurgeries = useMemo(() => {
-    if (!startDate || !endDate) return [];
-    return allSurgeries.filter(surgery => {
+  const filteredShifts = useMemo(() => {
+    if (!startDate || !endDate) return shiftRecords;
+    return shiftRecords.filter(shift => {
       try {
-        const surgeryDate = parseISO(surgery.date); // surgery.date is 'YYYY-MM-DD'
-        return isWithinInterval(surgeryDate, { start: startOfDay(startDate), end: endOfDay(endDate) });
-      } catch (e) { return false; }
+        const shiftDate = parseISO(shift.date);
+        return isWithinInterval(shiftDate, { start: startOfDay(startDate), end: endOfDay(endDate) });
+      } catch (e) {
+        console.error('Error filtering shift:', e);
+        return false;
+      }
     });
-  }, [allSurgeries, startDate, endDate]);
-
-  const filteredNonSurgical = useMemo(() => {
-    if (!startDate || !endDate) return [];
-    return allNonSurgical.filter(patient => {
-       try {
-        const entryDate = parseISO(patient.entryTimestamp);
-        return isWithinInterval(entryDate, { start: startOfDay(startDate), end: endOfDay(endDate) });
-      } catch (e) { return false; }
-    });
-  }, [allNonSurgical, startDate, endDate]);
-
-  const filteredNovelties = useMemo(() => {
-    if (!startDate || !endDate) return [];
-    return allNovelties.filter(novelty => {
-      try {
-        const entryDate = parseISO(novelty.entryTimestamp);
-        return isWithinInterval(entryDate, { start: startOfDay(startDate), end: endOfDay(endDate) });
-      } catch (e) { return false; }
-    });
-  }, [allNovelties, startDate, endDate]);
+  }, [shiftRecords, startDate, endDate]);
 
   const handleDownloadPdf = () => {
     toast({
@@ -99,7 +89,90 @@ export default function HistoricalLogView() {
     });
   };
   
-  const noDataInRange = !isLoading && startDate && endDate && filteredSurgeries.length === 0 && filteredNonSurgical.length === 0 && filteredNovelties.length === 0;
+  const noDataInRange = !isLoading && startDate && endDate && filteredShifts.length === 0;
+
+  const renderShiftRecord = (record: ShiftRecord) => {
+    const completedSurgeries = record.surgeries.filter(s => s.status === 'Completed');
+    const pendingSurgeries = record.surgeries.filter(s => s.status === 'Scheduled');
+
+    return (
+      <Card key={`${record.date}-${record.time}`} className="mb-4">
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle>Turno del {format(parseISO(record.date), 'PPP', { locale: es })}</CardTitle>
+              <CardDescription>
+                Cerrado por {record.closingSurgeon} a las {record.time}
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Cirugías Completadas */}
+            {completedSurgeries.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Pacientes Operados</h3>
+                <div className="space-y-2">
+                  {completedSurgeries.map(surgery => (
+                    <div key={surgery.id} className="p-2 bg-muted rounded-md">
+                      <p><strong>{surgery.patientName}</strong> - {surgery.procedureType}</p>
+                      <p className="text-sm text-muted-foreground">Diagnóstico: {surgery.diagnosticoPreOperatorio}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Cirugías Pendientes */}
+            {pendingSurgeries.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Cirugías Pendientes</h3>
+                <div className="space-y-2">
+                  {pendingSurgeries.map(surgery => (
+                    <div key={surgery.id} className="p-2 bg-muted rounded-md">
+                      <p><strong>{surgery.patientName}</strong> - {surgery.procedureType}</p>
+                      <p className="text-sm text-muted-foreground">Diagnóstico: {surgery.diagnosticoPreOperatorio}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Pacientes No Quirúrgicos */}
+            {record.nonSurgicalPatients.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Pacientes No Quirúrgicos</h3>
+                <div className="space-y-2">
+                  {record.nonSurgicalPatients.map(patient => (
+                    <div key={patient.id} className="p-2 bg-muted rounded-md">
+                      <p><strong>{patient.name}</strong></p>
+                      <p className="text-sm text-muted-foreground">Diagnóstico: {patient.diagnosis}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Novedades del Turno */}
+            {record.shiftNovelties.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Novedades</h3>
+                <div className="space-y-2">
+                  {record.shiftNovelties.map(novelty => (
+                    <div key={novelty.id} className="p-2 bg-muted rounded-md">
+                      <p><strong>{novelty.time}</strong> - {novelty.text}</p>
+                      <p className="text-sm text-muted-foreground">Reportado por: {novelty.reportedBy}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -162,111 +235,22 @@ export default function HistoricalLogView() {
         </Button>
       </div>
 
-      {isLoading && <p className="text-muted-foreground text-center py-4">Cargando datos históricos...</p>}
-      
-      {!isLoading && (!startDate || !endDate) && (
-        <Alert>
+      {isLoading ? (
+        <div className="flex justify-center items-center h-40">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : filteredShifts.length === 0 ? (
+        <Alert variant="default" className="mt-6">
           <Search className="h-4 w-4" />
-          <AlertTitle>Seleccione un Rango de Fechas</AlertTitle>
+          <AlertTitle>Sin Resultados</AlertTitle>
           <AlertDescription>
-            Por favor, elija una fecha de inicio y una fecha de fin para ver los registros históricos.
+            No se encontraron registros de turnos para el rango de fechas seleccionado.
           </AlertDescription>
         </Alert>
-      )}
-
-      {!isLoading && startDate && endDate && (
-        <>
-          {noDataInRange && (
-             <Alert variant="default" className="mt-6">
-                <Search className="h-4 w-4" />
-                <AlertTitle>Sin Resultados</AlertTitle>
-                <AlertDescription>
-                  No se encontraron registros para el rango de fechas seleccionado.
-                </AlertDescription>
-            </Alert>
-          )}
-
-          {filteredSurgeries.length > 0 && (
-            <div className="space-y-2 pt-4">
-              <h3 className="text-xl font-semibold text-primary">Cirugías y Procedimientos</h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Paciente</TableHead>
-                    <TableHead>Procedimiento</TableHead>
-                    <TableHead>Cirujano</TableHead>
-                    <TableHead>Estado</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredSurgeries.map(s => (
-                    <TableRow key={s.id}>
-                      <TableCell>{s.date ? format(parseISO(s.date), 'dd/MM/yyyy', { locale: es }) : 'N/A'}</TableCell>
-                      <TableCell>{s.patientName}</TableCell>
-                      <TableCell>{s.procedureType}</TableCell>
-                      <TableCell>{s.surgeon || 'N/A'}</TableCell>
-                      <TableCell><Badge variant={s.status === 'Cancelled' ? 'destructive' : s.status === 'Completed' ? 'default' : 'secondary' } className={cn(s.status === 'Completed' && 'bg-green-600 hover:bg-green-700')}>{s.status}</Badge></TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-                 <TableCaption>Total de cirugías/procedimientos en el rango: {filteredSurgeries.length}</TableCaption>
-              </Table>
-            </div>
-          )}
-
-          {filteredNonSurgical.length > 0 && (
-            <div className="space-y-2 pt-6">
-              <h3 className="text-xl font-semibold text-primary">Pacientes No Quirúrgicos</h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fecha Ingreso</TableHead>
-                    <TableHead>Paciente</TableHead>
-                    <TableHead>Diagnóstico</TableHead>
-                    <TableHead>Médico Tratante</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredNonSurgical.map(p => (
-                    <TableRow key={p.id}>
-                      <TableCell>{p.entryTimestamp ? format(parseISO(p.entryTimestamp), 'dd/MM/yyyy HH:mm', { locale: es }) : 'N/A'}</TableCell>
-                      <TableCell>{p.name}</TableCell>
-                      <TableCell>{p.diagnosis}</TableCell>
-                      <TableCell>{p.attending}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-                <TableCaption>Total de pacientes no quirúrgicos en el rango: {filteredNonSurgical.length}</TableCaption>
-              </Table>
-            </div>
-          )}
-
-          {filteredNovelties.length > 0 && (
-            <div className="space-y-2 pt-6">
-              <h3 className="text-xl font-semibold text-primary">Novedades del Turno</h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fecha y Hora</TableHead>
-                    <TableHead>Novedad</TableHead>
-                    <TableHead>Reportado Por</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredNovelties.map(n => (
-                    <TableRow key={n.id}>
-                      <TableCell>{n.entryTimestamp ? format(parseISO(n.entryTimestamp), 'dd/MM/yyyy HH:mm', { locale: es }) : 'N/A'}</TableCell>
-                      <TableCell className="whitespace-pre-wrap max-w-md">{n.text}</TableCell>
-                      <TableCell>{n.reportedBy}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-                <TableCaption>Total de novedades en el rango: {filteredNovelties.length}</TableCaption>
-              </Table>
-            </div>
-          )}
-        </>
+      ) : (
+        <div className="space-y-8">
+          {filteredShifts.map(renderShiftRecord)}
+        </div>
       )}
     </div>
   );

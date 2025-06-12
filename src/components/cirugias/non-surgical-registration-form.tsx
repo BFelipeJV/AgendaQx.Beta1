@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,6 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle, Hourglass } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import { MOCK_NON_SURGICAL_STORAGE_KEY } from '@/lib/constants';
 
 const nonSurgicalSchema = z.object({
   nombrePaciente: z.string().min(2, { message: 'El nombre del paciente debe tener al menos 2 caracteres.' }),
@@ -48,20 +48,57 @@ export default function NonSurgicalRegistrationForm() {
 
   async function onSubmit(values: NonSurgicalFormValues) {
     setIsSubmitting(true);
-    console.log('Datos de Registro No Quirúrgico:', values);
-    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    toast({
-      title: 'Registro Exitoso',
-      description: `El ingreso no quirúrgico para ${values.nombrePaciente} ha sido guardado.`,
-      action: (
-        <div className="flex items-center text-green-500">
-          <CheckCircle className="mr-2 h-5 w-5" />
-          <span>Éxito</span>
-        </div>
-      )
-    });
-    form.reset();
+    const now = new Date();
+    const newNonSurgicalPatient = {
+      id: `ns_${Date.now()}`,
+      name: values.nombrePaciente,
+      patientId: values.rut,
+      edad: values.edad,
+      diagnosis: values.diagnostico,
+      tratamiento: values.tratamiento,
+      comentarios: values.comentarios,
+      entryTimestamp: now.toISOString(),
+      attending: 'Dr. Asignado (Form.)', // Placeholder
+      ubicacionCama: 'Por asignar' // Placeholder
+    };
+
+    console.log('Datos de Registro No Quirúrgico a Guardar:', newNonSurgicalPatient);
+
+    try {
+      const existingNonSurgicalJSON = localStorage.getItem(MOCK_NON_SURGICAL_STORAGE_KEY);
+      let existingNonSurgical = [];
+      
+      if (existingNonSurgicalJSON && existingNonSurgicalJSON !== 'null' && existingNonSurgicalJSON !== 'undefined') {
+        existingNonSurgical = JSON.parse(existingNonSurgicalJSON);
+        console.log("Existing non-surgical patients:", existingNonSurgical);
+      }
+
+      existingNonSurgical.push(newNonSurgicalPatient);
+      console.log("Updated non-surgical patients list:", existingNonSurgical);
+      
+      localStorage.setItem(MOCK_NON_SURGICAL_STORAGE_KEY, JSON.stringify(existingNonSurgical));
+      
+      toast({
+        title: 'Registro Exitoso',
+        description: `El ingreso no quirúrgico para ${values.nombrePaciente} ha sido guardado.`,
+        action: (
+          <div className="flex items-center text-green-500">
+            <CheckCircle className="mr-2 h-5 w-5" />
+            <span>Éxito</span>
+          </div>
+        )
+      });
+      form.reset();
+    } catch (error) {
+      console.error("Error saving non-surgical patient to localStorage:", error);
+      toast({
+        title: 'Error de Almacenamiento',
+        description: 'No se pudo guardar el registro localmente. Intente de nuevo.',
+        variant: 'destructive',
+      });
+    }
+    
     setIsSubmitting(false);
   }
 

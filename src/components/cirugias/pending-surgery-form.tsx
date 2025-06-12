@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,6 +18,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle, Hourglass } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import { MOCK_SURGERIES_STORAGE_KEY } from '@/lib/constants';
+import type { Surgery } from '@/lib/types';
 
 const pendingSurgerySchema = z.object({
   tipoIntervencion: z.enum(['cirugia', 'procedimiento'], {
@@ -28,6 +29,7 @@ const pendingSurgerySchema = z.object({
   edad: z.coerce.number({ invalid_type_error: 'La edad debe ser un número.' }).int().positive({ message: 'La edad debe ser un número positivo.' }).min(0, { message: 'La edad no puede ser negativa.' }),
   rut: z.string().min(7, { message: 'El RUT debe tener al menos 7 caracteres.' }).regex(/^[0-9Kk.-]+$/, { message: 'RUT inválido.'}),
   diagnostico: z.string().min(1, { message: 'El diagnóstico es obligatorio.' }),
+  cirugiaPropuesta: z.string().min(1, { message: 'La cirugía propuesta es obligatoria.' }),
   comentarios: z.string().optional(),
 });
 
@@ -45,26 +47,58 @@ export default function PendingSurgeryForm() {
       edad: undefined,
       rut: '',
       diagnostico: '',
+      cirugiaPropuesta: '',
       comentarios: '',
     },
   });
 
   async function onSubmit(values: PendingSurgeryFormValues) {
     setIsSubmitting(true);
-    console.log('Datos de Cirugía Pendiente:', values);
-    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    toast({
-      title: 'Registro Actualizado',
-      description: `La información del ${values.tipoIntervencion} pendiente para ${values.nombrePaciente} ha sido guardada.`,
-      action: (
-        <div className="flex items-center text-green-500">
-          <CheckCircle className="mr-2 h-5 w-5" />
-          <span>Éxito</span>
-        </div>
-      )
-    });
-    form.reset();
+    const now = new Date();
+    const newSurgery: Surgery = {
+      id: now.getTime().toString(),
+      tipoIntervencion: values.tipoIntervencion,
+      patientName: values.nombrePaciente,
+      patientId: values.rut,
+      edad: values.edad,
+      procedureType: values.cirugiaPropuesta,
+      diagnosticoPreOperatorio: values.diagnostico,
+      status: 'Scheduled',
+      date: now.toISOString().split('T')[0],
+      time: now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+      entryTimestamp: now.toISOString(),
+      comentariosAdicionales: values.comentarios,
+    };
+
+    console.log('Datos de Cirugía Pendiente a Guardar:', newSurgery);
+
+    try {
+      const existingSurgeriesJSON = localStorage.getItem(MOCK_SURGERIES_STORAGE_KEY);
+      const existingSurgeries: Surgery[] = existingSurgeriesJSON ? JSON.parse(existingSurgeriesJSON) : [];
+      existingSurgeries.push(newSurgery);
+      localStorage.setItem(MOCK_SURGERIES_STORAGE_KEY, JSON.stringify(existingSurgeries));
+      
+      toast({
+        title: 'Registro Exitoso',
+        description: `La información del ${values.tipoIntervencion} pendiente para ${values.nombrePaciente} ha sido guardada.`,
+        action: (
+          <div className="flex items-center text-green-500">
+            <CheckCircle className="mr-2 h-5 w-5" />
+            <span>Éxito</span>
+          </div>
+        )
+      });
+      form.reset();
+    } catch (error) {
+      console.error("Error saving pending surgery to localStorage:", error);
+      toast({
+        title: 'Error de Almacenamiento',
+        description: 'No se pudo guardar la cirugía pendiente localmente. Intente de nuevo.',
+        variant: 'destructive',
+      });
+    }
+    
     setIsSubmitting(false);
   }
 
@@ -154,6 +188,20 @@ export default function PendingSurgeryForm() {
               <FormLabel>Diagnóstico Principal *</FormLabel>
               <FormControl>
                 <Input placeholder="Ej: Colecistitis crónica calculosa" {...field} disabled={isSubmitting}/>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="cirugiaPropuesta"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Cirugía Propuesta *</FormLabel>
+              <FormControl>
+                <Input placeholder="Ej: Colecistectomía laparoscópica" {...field} disabled={isSubmitting}/>
               </FormControl>
               <FormMessage />
             </FormItem>
