@@ -24,6 +24,7 @@ import {
   FilePenLine
 } from 'lucide-react';
 import OnCallSurgeonsDisplay from '@/components/dashboard/on-call-surgeons';
+import MonthlySummary from '@/components/dashboard/monthly-summary';
 import { APP_HEADER_TITLE } from '@/lib/constants';
 import type { IconName } from '@/lib/types';
 
@@ -192,6 +193,8 @@ export default function DashboardPage() {
           );
         })}
       </Accordion>
+
+      <MonthlySummary />
     </div>
   );
 }
