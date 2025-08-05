@@ -43,7 +43,7 @@ interface DashboardSection {
 }
 
 // Helper to get icon component by name
-const IconComponents: Record<IconName, React.ElementType> = {
+const IconComponents: Partial<Record<IconName, React.ElementType>> = {
   FilePlus2,
   BedDouble,
   FileClock,
