@@ -101,7 +101,7 @@ export default function UserManagementTable() {
         <div className="text-center py-8">
             <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground">No hay usuarios registrados para mostrar.</p>
-            <p className="text-sm text-muted-foreground mt-1">Puedes registrar nuevos usuarios en la sección "Registrar Nuevo Usuario".</p>
+            <p className="text-sm text-muted-foreground mt-1">Puedes registrar nuevos usuarios en la sección &quot;Registrar Nuevo Usuario&quot;.</p>
         </div>
     );
   }
